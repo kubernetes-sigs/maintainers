@@ -148,7 +148,7 @@ func getOwnerFiles(root string) ([]string, error) {
 		if info.IsDir() {
 			return nil
 		}
-		if "OWNERS" == filepath.Base(path) {
+		if "OWNERS" == filepath.Base(path) && !strings.Contains(path, "vendor") {
 			matches = append(matches, path)
 		}
 		return nil
