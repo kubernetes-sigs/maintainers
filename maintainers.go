@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/yaml"
@@ -81,13 +82,19 @@ func main() {
 	for _, item := range contribs {
 		if stringInSlice(item.ID, uniqueUsers) {
 			fmt.Printf("%s : %d\n", item.ID, item.Count)
+			userIDs.Delete(item.ID)
 		}
+	}
+
+	fmt.Printf("\n\n>>>>> Missing Contributions:\n")
+	for id, _ := range userIDs {
+		fmt.Printf("%#v\n", id)
 	}
 }
 
 func stringInSlice(a string, list []string) bool {
 	for _, b := range list {
-		if b == a {
+		if strings.EqualFold(a, b) {
 			return true
 		}
 	}
