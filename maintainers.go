@@ -98,7 +98,9 @@ func main() {
 
 func InsertLowerCase(s sets.String, items ...string) {
 	sort.Strings(items)
-	s.Insert(items...)
+	for _, item := range items {
+		s.Insert(strings.ToLower(item))
+	}
 }
 
 func stringInSlice(a string, list []string) (bool, string) {
