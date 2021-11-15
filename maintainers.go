@@ -45,7 +45,7 @@ func main() {
 		panic(err)
 	}
 	for _, ids := range configAliases.RepoAliases {
-		userIDs.Insert(ids...)
+		InsertLowerCase(userIDs, ids...)
 	}
 
 	files, err := getOwnerFiles(pwd)
@@ -59,11 +59,11 @@ func main() {
 			panic(err)
 		}
 		for _, filterInfo := range configOwners.Filters {
-			userIDs.Insert(filterInfo.Approvers...)
-			userIDs.Insert(filterInfo.Reviewers...)
+			InsertLowerCase(userIDs, filterInfo.Approvers...)
+			InsertLowerCase(userIDs, filterInfo.Reviewers...)
 		}
-		userIDs.Insert(configOwners.Approvers...)
-		userIDs.Insert(configOwners.Reviewers...)
+		InsertLowerCase(userIDs, configOwners.Approvers...)
+		InsertLowerCase(userIDs, configOwners.Reviewers...)
 	}
 
 	for key, _ := range configAliases.RepoAliases {
@@ -80,25 +80,34 @@ func main() {
 	}
 	fmt.Printf("\n\n>>>>> Contributions:\n")
 	for _, item := range contribs {
-		if stringInSlice(item.ID, uniqueUsers) {
+		found, what := stringInSlice(item.ID, uniqueUsers)
+		if  found {
 			fmt.Printf("%s : %d\n", item.ID, item.Count)
+			userIDs.Delete(what)
 			userIDs.Delete(item.ID)
 		}
 	}
 
-	fmt.Printf("\n\n>>>>> Missing Contributions:\n")
-	for id, _ := range userIDs {
+	missingIDs := userIDs.List()
+	sort.Strings(missingIDs)
+	fmt.Printf("\n\n>>>>> Missing Contributions: %d\n", len(missingIDs))
+	for _, id := range missingIDs {
 		fmt.Printf("%#v\n", id)
 	}
 }
 
-func stringInSlice(a string, list []string) bool {
+func InsertLowerCase(s sets.String, items ...string) {
+	sort.Strings(items)
+	s.Insert(items...)
+}
+
+func stringInSlice(a string, list []string) (bool, string) {
 	for _, b := range list {
 		if strings.EqualFold(a, b) {
-			return true
+			return true, b
 		}
 	}
-	return false
+	return false, ""
 }
 
 func getOwnerAliases(filename string) (*Aliases, error) {
@@ -195,7 +204,7 @@ func getContributionsForAYear() (error, []Contribution) {
 
 	var contribs []Contribution
 	for i := 0; i < len(foo); i++ {
-		contribs = append(contribs, Contribution{foo[i].(string), int(bar[i].(float64))})
+		contribs = append(contribs, Contribution{strings.ToLower(foo[i].(string)), int(bar[i].(float64))})
 	}
 	sort.Slice(contribs, func(i, j int) bool {
 		return contribs[i].Count > contribs[j].Count
