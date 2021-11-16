@@ -8,8 +8,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/spf13/pflag"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/yaml"
@@ -32,6 +35,10 @@ type Aliases struct {
 }
 
 func main() {
+	var fixupFlag bool
+	pflag.BoolVarP(&fixupFlag, "fixup", "f", false, "Cleanup stale owner files")
+	pflag.Parse()
+
 	pwd, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -93,6 +100,37 @@ func main() {
 	fmt.Printf("\n\n>>>>> Missing Contributions: %d\n", len(missingIDs))
 	for _, id := range missingIDs {
 		fmt.Printf("%#v\n", id)
+	}
+
+	if fixupFlag {
+		files, err = getOwnerFiles(pwd)
+		if err != nil {
+			panic(err)
+		}
+		files = append(files, aliasPath)
+
+		var regexArray []*regexp.Regexp
+		for _, id := range missingIDs {
+			searchRegex := regexp.MustCompile("- (?i)" + id)
+			regexArray = append(regexArray, searchRegex)
+		}
+		for _, path := range files {
+			fmt.Printf("Fixing up %s\n", path)
+			data, err := ioutil.ReadFile(path)
+			if err != nil {
+				panic(err)
+			}
+			contents := string(data)
+			i := 0
+			for _, regex := range regexArray {
+				contents = regex.ReplaceAllString(contents, "# - " + missingIDs[i])
+				i++
+			}
+			err = ioutil.WriteFile(path, []byte(contents), 0666)
+			if err != nil {
+				panic(err)
+			}
+		}
 	}
 }
 
