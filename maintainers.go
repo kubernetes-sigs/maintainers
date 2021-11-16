@@ -52,7 +52,7 @@ func main() {
 		panic(err)
 	}
 	for _, ids := range configAliases.RepoAliases {
-		InsertLowerCase(userIDs, ids...)
+		InsertID(userIDs, ids...)
 	}
 
 	files, err := getOwnerFiles(pwd)
@@ -66,11 +66,11 @@ func main() {
 			panic(err)
 		}
 		for _, filterInfo := range configOwners.Filters {
-			InsertLowerCase(userIDs, filterInfo.Approvers...)
-			InsertLowerCase(userIDs, filterInfo.Reviewers...)
+			InsertID(userIDs, filterInfo.Approvers...)
+			InsertID(userIDs, filterInfo.Reviewers...)
 		}
-		InsertLowerCase(userIDs, configOwners.Approvers...)
-		InsertLowerCase(userIDs, configOwners.Reviewers...)
+		InsertID(userIDs, configOwners.Approvers...)
+		InsertID(userIDs, configOwners.Reviewers...)
 	}
 
 	for key, _ := range configAliases.RepoAliases {
@@ -85,13 +85,26 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("\n\n>>>>> Contributions:\n")
-	for _, item := range contribs {
-		found, what := stringInSlice(item.ID, uniqueUsers)
-		if  found {
+	var ownerContribs []Contribution
+	for _, id := range uniqueUsers {
+		for _, item := range contribs {
+			if strings.ToLower(item.ID) == strings.ToLower(id) {
+				ownerContribs = append(ownerContribs, Contribution{id, item.ID, item.Count})
+				userIDs.Delete(id)
+				break
+			}
+		}
+	}
+
+	fmt.Printf("\n\n>>>>> Contributions: %d\n", len(ownerContribs))
+	sort.Slice(ownerContribs, func(i, j int) bool {
+		return ownerContribs[i].Count > ownerContribs[j].Count
+	})
+	for _, item := range ownerContribs {
+		if item.ID != item.alias {
+			fmt.Printf("%s(%s) : %d\n", item.ID, item.alias, item.Count)
+		} else {
 			fmt.Printf("%s : %d\n", item.ID, item.Count)
-			userIDs.Delete(what)
-			userIDs.Delete(item.ID)
 		}
 	}
 
@@ -111,7 +124,7 @@ func main() {
 
 		var regexArray []*regexp.Regexp
 		for _, id := range missingIDs {
-			searchRegex := regexp.MustCompile("- (?i)" + id)
+			searchRegex := regexp.MustCompile("- " + id)
 			regexArray = append(regexArray, searchRegex)
 		}
 		for _, path := range files {
@@ -134,20 +147,11 @@ func main() {
 	}
 }
 
-func InsertLowerCase(s sets.String, items ...string) {
-	sort.Strings(items)
-	for _, item := range items {
-		s.Insert(strings.ToLower(item))
+func InsertID(s sets.String, ids ...string) {
+	sort.Strings(ids)
+	for _, id := range ids {
+		s.Insert(id)
 	}
-}
-
-func stringInSlice(a string, list []string) (bool, string) {
-	for _, b := range list {
-		if strings.EqualFold(a, b) {
-			return true, b
-		}
-	}
-	return false, ""
 }
 
 func getOwnerAliases(filename string) (*Aliases, error) {
@@ -210,6 +214,7 @@ type Values struct {
 
 type Contribution struct {
 	ID    string
+	alias string
 	Count int
 }
 
@@ -244,10 +249,7 @@ func getContributionsForAYear() (error, []Contribution) {
 
 	var contribs []Contribution
 	for i := 0; i < len(foo); i++ {
-		contribs = append(contribs, Contribution{strings.ToLower(foo[i].(string)), int(bar[i].(float64))})
+		contribs = append(contribs, Contribution{foo[i].(string), "", int(bar[i].(float64))})
 	}
-	sort.Slice(contribs, func(i, j int) bool {
-		return contribs[i].Count > contribs[j].Count
-	})
 	return nil, contribs
 }
