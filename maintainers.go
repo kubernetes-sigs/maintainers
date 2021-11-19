@@ -105,7 +105,11 @@ func main() {
 	})
 	var lowPRComments []string
 	for _, item := range ownerContribs {
-		commentCount, _ := fetchPRCommentCount(item.ID)
+		commentCount, err := fetchPRCommentCount(item.ID)
+		for commentCount == -1 && err == nil {
+			time.Sleep(5 * time.Second)
+			commentCount, err = fetchPRCommentCount(item.ID)
+		}
 		if item.ID != item.alias {
 			fmt.Printf("%s(%s) : %d : %d \n", item.ID, item.alias, item.Count, commentCount)
 		} else {
@@ -172,6 +176,10 @@ func fetchPRCommentCount(user string) (int, error) {
 
 	if res.Body != nil {
 		defer res.Body.Close()
+	}
+
+	if res.StatusCode == http.StatusForbidden {
+		return -1, nil
 	}
 
 	body, readErr := ioutil.ReadAll(res.Body)
