@@ -128,7 +128,7 @@ func main() {
 		fmt.Printf("%#v\n", id)
 	}
 
-	fmt.Printf("\n\n>>>>> Low reviews/approvals (GH pr comments <= 10 && devstats <=20): %d\n", len(missingIDs))
+	fmt.Printf("\n\n>>>>> Low reviews/approvals (GH pr comments <= 10 && devstats <=20): %d\n", len(lowPRComments))
 	for _, id := range lowPRComments {
 		fmt.Printf("%#v\n", id)
 	}
