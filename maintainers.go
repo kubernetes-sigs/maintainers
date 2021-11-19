@@ -9,7 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/pflag"
 
@@ -36,7 +38,7 @@ type Aliases struct {
 
 func main() {
 	var fixupFlag bool
-	pflag.BoolVarP(&fixupFlag, "fixup", "f", true, "Cleanup stale owner files")
+	pflag.BoolVarP(&fixupFlag, "fixup", "f", false, "Cleanup stale owner files")
 	pflag.Parse()
 
 	pwd, err := os.Getwd()
@@ -97,21 +99,33 @@ func main() {
 	}
 
 	fmt.Printf("\n\n>>>>> Contributions: %d\n", len(ownerContribs))
+	fmt.Printf(">>>>> GitHub ID : Devstats contrib count : GitHub PR comment count\n")
 	sort.Slice(ownerContribs, func(i, j int) bool {
 		return ownerContribs[i].Count > ownerContribs[j].Count
 	})
+	var lowPRComments []string
 	for _, item := range ownerContribs {
+		commentCount, _ := fetchPRCommentCount(item.ID)
 		if item.ID != item.alias {
-			fmt.Printf("%s(%s) : %d\n", item.ID, item.alias, item.Count)
+			fmt.Printf("%s(%s) : %d : %d \n", item.ID, item.alias, item.Count, commentCount)
 		} else {
-			fmt.Printf("%s : %d\n", item.ID, item.Count)
+			fmt.Printf("%s : %d : %d \n", item.ID, item.Count, commentCount)
 		}
+		if item.Count <= 20 && commentCount <= 10 {
+			lowPRComments = append(lowPRComments, item.ID)
+		}
+		time.Sleep(2 * time.Second)
 	}
 
 	missingIDs := userIDs.List()
 	sort.Strings(missingIDs)
-	fmt.Printf("\n\n>>>>> Missing Contributions: %d\n", len(missingIDs))
+	fmt.Printf("\n\n>>>>> Missing Contributions (devstats == 0): %d\n", len(missingIDs))
 	for _, id := range missingIDs {
+		fmt.Printf("%#v\n", id)
+	}
+
+	fmt.Printf("\n\n>>>>> Low reviews/approvals (GH pr comments <= 10 && devstats <=20): %d\n", len(missingIDs))
+	for _, id := range lowPRComments {
 		fmt.Printf("%#v\n", id)
 	}
 
@@ -128,6 +142,50 @@ func main() {
 			}
 		}
 	}
+}
+
+func fetchPRCommentCount(user string) (int, error) {
+	t := time.Now().AddDate(-1, 0, 0)
+	url := "https://api.github.com/search/issues?q=" +
+		"is%3Apr" +
+		"+involves%3A" + user +
+		"+is%3Amerged" +
+		"+updated%3A>%3D" + t.Format("2006-01-02") +
+		"+commenter%3A" + user +
+		"+repo%3Akubernetes%2Fkubernetes" +
+		"+user%3A" + user
+
+	spaceClient := http.Client{}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return -1, err
+	}
+
+	if token := os.Getenv("GITHUB_TOKEN"); len(token) != 0 {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	}
+
+	res, err := spaceClient.Do(req)
+	if err != nil {
+		return -1, err
+	}
+
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+
+	body, readErr := ioutil.ReadAll(res.Body)
+	if readErr != nil {
+		return -1, readErr
+	}
+
+	var result map[string]interface{}
+	jsonErr := json.Unmarshal(body, &result)
+	if jsonErr != nil {
+		return -1, jsonErr
+	}
+
+	return strconv.Atoi(fmt.Sprintf("%v", result["total_count"]))
 }
 
 func InsertID(s sets.String, ids ...string) {
@@ -237,8 +295,7 @@ func getContributionsForAYear() (error, []Contribution) {
 	return nil, contribs
 }
 
-
-func removeUserFromOWNERS(path string, users[] string) error {
+func removeUserFromOWNERS(path string, users []string) error {
 	fmt.Printf("Fixing up %s\n", path)
 	for _, user := range users {
 		sourceYaml, err := ioutil.ReadFile(path)
@@ -278,16 +335,16 @@ func switchToEmeritus(rootNode *yaml3.Node, user string) {
 		return
 	}
 
-		// cleanup user from approvers and reviewers
-		if !removeUserFromApproversAndReviewers(mappingNode, user) {
-			return
-		}
+	// cleanup user from approvers and reviewers
+	if !removeUserFromApproversAndReviewers(mappingNode, user) {
+		return
+	}
 
-		// add user to emeritus list, create things we need if they are not there already
-		emeritusSeqNode := fetchEmeritusSequenceNode(mappingNode)
+	// add user to emeritus list, create things we need if they are not there already
+	emeritusSeqNode := fetchEmeritusSequenceNode(mappingNode)
 
-		// add if not already present
-		addUserToEmeritusList(emeritusSeqNode, user)
+	// add if not already present
+	addUserToEmeritusList(emeritusSeqNode, user)
 }
 
 func addUserToEmeritusList(emeritusSeqNode *yaml3.Node, user string) {
