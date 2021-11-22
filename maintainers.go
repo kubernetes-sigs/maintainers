@@ -41,6 +41,7 @@ func main() {
 	pflag.BoolVarP(&fixupFlag, "fixup", "f", false, "Cleanup stale owner files")
 	pflag.Parse()
 
+	fmt.Printf("Running script : %s\n", time.Now().Format("01-02-2006 15:04:05"))
 	pwd, err := os.Getwd()
 	if err != nil {
 		panic(err)
