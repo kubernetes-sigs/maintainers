@@ -1,4 +1,4 @@
-module k8s.io/owners
+module k8s.io/maintainers
 
 go 1.17
 
