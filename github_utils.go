@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
 )
 
-func fetchPRCommentCount(user string) (int, error) {
+func fetchPRCommentCount(user, repository string) (int, error) {
 	t := time.Now().AddDate(-1, 0, 0)
 	url := "https://api.github.com/search/issues?q=" +
 		"is%3Apr" +
@@ -18,7 +19,7 @@ func fetchPRCommentCount(user string) (int, error) {
 		"+is%3Amerged" +
 		"+updated%3A>%3D" + t.Format("2006-01-02") +
 		"+commenter%3A" + user +
-		"+repo%3Akubernetes%2Fkubernetes" +
+		"+repo%3A" + url.QueryEscape(repository) +
 		"+user%3A" + user
 
 	spaceClient := http.Client{}

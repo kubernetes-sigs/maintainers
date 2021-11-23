@@ -31,8 +31,10 @@ type Aliases struct {
 
 func main() {
 	var fixupFlag, skipGH bool
+	var repository string
 	pflag.BoolVarP(&fixupFlag, "fixup", "f", false, "Cleanup stale owner files")
 	pflag.BoolVarP(&skipGH, "skipGH", "s", true, "skip github PR count check")
+	pflag.StringVarP(&repository, "repository", "r", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
 	pflag.Parse()
 
 	fmt.Printf("Running script : %s\n", time.Now().Format("01-02-2006 15:04:05"))
@@ -78,7 +80,7 @@ func main() {
 	fmt.Printf("Found %d unique aliases\n", len(configAliases.RepoAliases))
 	fmt.Printf("Found %d unique users\n", len(uniqueUsers))
 
-	err, contribs := getContributionsForAYear()
+	err, contribs := getContributionsForAYear(repository)
 	if err != nil {
 		panic(err)
 	}
@@ -102,10 +104,10 @@ func main() {
 	for _, item := range ownerContribs {
 		commentCount := -1
 		if !skipGH {
-			commentCount, err := fetchPRCommentCount(item.ID)
+			commentCount, err = fetchPRCommentCount(item.ID, repository)
 			for commentCount == -1 && err == nil {
 				time.Sleep(5 * time.Second)
-				commentCount, err = fetchPRCommentCount(item.ID)
+				commentCount, err = fetchPRCommentCount(item.ID, repository)
 			}
 			if item.Count <= 20 && commentCount <= 10 {
 				lowPRComments = append(lowPRComments, item.ID)
