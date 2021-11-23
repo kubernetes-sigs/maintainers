@@ -33,7 +33,7 @@ func main() {
 	var fixupFlag, skipGH bool
 	var repository string
 	pflag.BoolVarP(&fixupFlag, "fixup", "f", false, "Cleanup stale owner files")
-	pflag.BoolVarP(&skipGH, "skipGH", "s", true, "skip github PR count check")
+	pflag.BoolVarP(&skipGH, "skipGH", "s", false, "skip github PR count check")
 	pflag.StringVarP(&repository, "repository", "r", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
 	pflag.Parse()
 
@@ -83,6 +83,9 @@ func main() {
 	err, contribs := getContributionsForAYear(repository)
 	if err != nil {
 		panic(err)
+	}
+	if contribs == nil || len(contribs) == 0 {
+		panic("unable to find any contributions in repository : " + repository)
 	}
 	var ownerContribs []Contribution
 	for _, id := range uniqueUsers {

@@ -18,10 +18,12 @@ func getContributionsForAYear(repository string) (error, []Contribution) {
 		"format": "table"
 	}]
 }`
+	repository = strings.Replace(repository,"/", "", -1)
+	repository = strings.Replace(repository, "-", "", -1)
 	postBody = strings.Replace(
 		postBody,
 		"hdev_contributionsallall",
-		fmt.Sprintf("hdev_contributions%sall", strings.ReplaceAll(repository, "/", "")),
+		fmt.Sprintf("hdev_contributions%sall", repository),
 		-1)
 
 	requestBody := bytes.NewBuffer([]byte(postBody))
