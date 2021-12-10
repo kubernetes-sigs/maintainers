@@ -32,7 +32,7 @@ type Aliases struct {
 func main() {
 	var fixupFlag, skipGH bool
 	var repository string
-	pflag.BoolVarP(&fixupFlag, "fixup", "f", false, "Cleanup stale owner files")
+	pflag.BoolVarP(&fixupFlag, "fixup", "f", true, "Cleanup stale owner files")
 	pflag.BoolVarP(&skipGH, "skipGH", "s", false, "skip github PR count check")
 	pflag.StringVarP(&repository, "repository", "r", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
 	pflag.Parse()
