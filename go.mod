@@ -1,4 +1,4 @@
-module k8s.io/maintainers
+module github.com/dims/maintainers
 
 go 1.17
 
