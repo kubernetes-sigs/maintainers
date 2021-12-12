@@ -102,7 +102,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("\n\n>>>>> Contributions: %d\n", len(ownerContribs))
+	fmt.Printf("\n\n>>>>> Contributions from %s : %d\n", repository, len(ownerContribs))
 	fmt.Printf(">>>>> GitHub ID : Devstats contrib count : GitHub PR comment count\n")
 	sort.Slice(ownerContribs, func(i, j int) bool {
 		return ownerContribs[i].Count > ownerContribs[j].Count
