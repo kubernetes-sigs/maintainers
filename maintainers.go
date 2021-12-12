@@ -44,14 +44,19 @@ func main() {
 	}
 
 	userIDs := sets.String{}
+	var repoAliases map[string][]string
 	aliasPath, _ := filepath.Abs(filepath.Join(pwd, "OWNERS_ALIASES"))
-	fmt.Printf("Processing %s\n", aliasPath)
-	configAliases, err := getOwnerAliases(aliasPath)
-	if err != nil {
-		panic(err)
-	}
-	for _, ids := range configAliases.RepoAliases {
-		InsertID(userIDs, ids...)
+	if _, err := os.Stat(aliasPath); err == nil {
+		fmt.Printf("Processing %s\n", aliasPath)
+		configAliases, err := getOwnerAliases(aliasPath)
+		if err != nil {
+			panic(err)
+		}
+		for _, ids := range configAliases.RepoAliases {
+			InsertID(userIDs, ids...)
+		}
+		repoAliases = configAliases.RepoAliases
+		fmt.Printf("Found %d unique aliases\n", len(repoAliases))
 	}
 
 	files, err := getOwnerFiles(pwd)
@@ -72,12 +77,11 @@ func main() {
 		InsertID(userIDs, configOwners.Reviewers...)
 	}
 
-	for key, _ := range configAliases.RepoAliases {
+	for key, _ := range repoAliases {
 		userIDs.Delete(key)
 	}
 
 	uniqueUsers := userIDs.List()
-	fmt.Printf("Found %d unique aliases\n", len(configAliases.RepoAliases))
 	fmt.Printf("Found %d unique users\n", len(uniqueUsers))
 
 	err, contribs := getContributionsForAYear(repository)
@@ -143,7 +147,9 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		files = append(files, aliasPath)
+		if _, err := os.Stat(aliasPath); err == nil {
+			files = append(files, aliasPath)
+		}
 		for _, path := range files {
 			err = removeUserFromOWNERS(path, missingIDs)
 			if err != nil {
