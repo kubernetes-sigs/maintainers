@@ -156,6 +156,12 @@ func main() {
 				panic(err)
 			}
 		}
+		for _, path := range files {
+			err = removeUserFromOWNERS(path, lowPRComments)
+			if err != nil {
+				panic(err)
+			}
+		}
 	}
 }
 

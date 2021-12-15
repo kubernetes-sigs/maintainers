@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -31,8 +32,12 @@ func getContributionsForAYear(repository string) (error, []Contribution) {
 	if err != nil {
 		return err, nil
 	}
-
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.Wrap(err, "bad error code from devstats : " + string(resp.StatusCode)), nil
+	}
+
 	var parsed map[string]map[string]map[string][]Frames
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -40,7 +45,7 @@ func getContributionsForAYear(repository string) (error, []Contribution) {
 	}
 	err = json.Unmarshal(body, &parsed)
 	if err != nil {
-		return err, nil
+		return errors.Wrap(err, "unable to parse json from devstats"), nil
 	}
 
 	foo := parsed["results"]["A"]["frames"][0].Data.Items[0]
