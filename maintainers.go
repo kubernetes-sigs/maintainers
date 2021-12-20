@@ -94,25 +94,29 @@ func main() {
 	}
 
 	if !dryRun {
-		files, err = getOwnerFiles(pwd)
+		fixupOwnersFiles(files, err, pwd, missingIDs, lowPRComments)
+	}
+}
+
+func fixupOwnersFiles(files []string, err error, pwd string, missingIDs []string, lowPRComments []string) {
+	files, err = getOwnerFiles(pwd)
+	if err != nil {
+		panic(err)
+	}
+	aliasPath, _ := filepath.Abs(filepath.Join(pwd, "OWNERS_ALIASES"))
+	if _, err := os.Stat(aliasPath); err == nil {
+		files = append(files, aliasPath)
+	}
+	for _, path := range files {
+		err = removeUserFromOWNERS(path, missingIDs)
 		if err != nil {
 			panic(err)
 		}
-		aliasPath, _ := filepath.Abs(filepath.Join(pwd, "OWNERS_ALIASES"))
-		if _, err := os.Stat(aliasPath); err == nil {
-			files = append(files, aliasPath)
-		}
-		for _, path := range files {
-			err = removeUserFromOWNERS(path, missingIDs)
-			if err != nil {
-				panic(err)
-			}
-		}
-		for _, path := range files {
-			err = removeUserFromOWNERS(path, lowPRComments)
-			if err != nil {
-				panic(err)
-			}
+	}
+	for _, path := range files {
+		err = removeUserFromOWNERS(path, lowPRComments)
+		if err != nil {
+			panic(err)
 		}
 	}
 }
