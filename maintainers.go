@@ -63,11 +63,11 @@ func main() {
 
 	lowPRComments := fetchGithubPRCommentCounts(ownerContribs)
 
-	// Sort by descending order of contributions in devstats
+	// Sort by descending order of contributions/comments in devstats
 	sort.Slice(ownerContribs, func(i, j int) bool {
-		return ownerContribs[i].ContribCount > ownerContribs[j].ContribCount
+		return ownerContribs[i].ContribCount > ownerContribs[j].ContribCount &&
+			ownerContribs[i].CommentCount > ownerContribs[j].CommentCount
 	})
-
 
 	fmt.Printf("\n\n>>>>> Contributions from %s devstats repo and %s github repo : %d\n", repositoryDS, repositoryGH, len(ownerContribs))
 	fmt.Printf(">>>>> GitHub ID : Devstats contrib count : GitHub PR comment count\n")
