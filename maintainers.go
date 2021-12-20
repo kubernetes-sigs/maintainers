@@ -14,11 +14,12 @@ import (
 )
 
 func main() {
-	var fixupFlag, skipGH bool
-	var repository string
-	pflag.BoolVarP(&fixupFlag, "fixup", "f", true, "Cleanup stale owner files")
-	pflag.BoolVarP(&skipGH, "skipGH", "s", false, "skip github PR count check")
-	pflag.StringVarP(&repository, "repository", "r", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
+	var dryRun, skipGH bool
+	var repositoryDS, repositoryGH string
+	pflag.BoolVarP(&dryRun, "dryrun", "r", true, "do not modify any files")
+	pflag.BoolVarP(&skipGH, "skip-github", "s", false, "skip github PR count check")
+	pflag.StringVarP(&repositoryDS, "repository-devstats", "d", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
+	pflag.StringVarP(&repositoryGH, "repository-github", "g", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
 	pflag.Parse()
 
 	fmt.Printf("Running script : %s\n", time.Now().Format("01-02-2006 15:04:05"))
@@ -68,12 +69,12 @@ func main() {
 	uniqueUsers := userIDs.List()
 	fmt.Printf("Found %d unique users\n", len(uniqueUsers))
 
-	err, contribs := getContributionsForAYear(repository)
+	err, contribs := getContributionsForAYear(repositoryDS)
 	if err != nil {
 		panic(err)
 	}
 	if contribs == nil || len(contribs) == 0 {
-		panic("unable to find any contributions in repository : " + repository)
+		panic("unable to find any contributions in repository : " + repositoryDS)
 	}
 	var ownerContribs []Contribution
 	for _, id := range uniqueUsers {
@@ -86,7 +87,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("\n\n>>>>> Contributions from %s : %d\n", repository, len(ownerContribs))
+	fmt.Printf("\n\n>>>>> Contributions from %s devstats repo and %s github repo : %d\n", repositoryDS, repositoryGH, len(ownerContribs))
 	fmt.Printf(">>>>> GitHub ID : Devstats contrib count : GitHub PR comment count\n")
 	sort.Slice(ownerContribs, func(i, j int) bool {
 		return ownerContribs[i].Count > ownerContribs[j].Count
@@ -95,10 +96,10 @@ func main() {
 	for _, item := range ownerContribs {
 		commentCount := -1
 		if !skipGH {
-			commentCount, err = fetchPRCommentCount(item.ID, repository)
+			commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
 			for commentCount == -1 && err == nil {
 				time.Sleep(5 * time.Second)
-				commentCount, err = fetchPRCommentCount(item.ID, repository)
+				commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
 			}
 			if item.Count <= 20 && commentCount <= 10 {
 				lowPRComments = append(lowPRComments, item.ID)
@@ -126,7 +127,7 @@ func main() {
 		}
 	}
 
-	if fixupFlag {
+	if !dryRun {
 		files, err = getOwnerFiles(pwd)
 		if err != nil {
 			panic(err)
