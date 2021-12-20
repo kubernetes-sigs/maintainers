@@ -115,13 +115,14 @@ func main() {
 
 	missingIDs := userIDs.List()
 	sort.Strings(missingIDs)
-	fmt.Printf("\n\n>>>>> Missing Contributions (devstats == 0): %d\n", len(missingIDs))
+	fmt.Printf("\n\n>>>>> Missing Contributions in %s (devstats == 0): %d\n", repositoryDS, len(missingIDs))
 	for _, id := range missingIDs {
 		fmt.Printf("%s\n", id)
 	}
 
 	if !skipGH {
-		fmt.Printf("\n\n>>>>> Low reviews/approvals (GH pr comments <= 10 && devstats <=20): %d\n", len(lowPRComments))
+		fmt.Printf("\n\n>>>>> Low reviews/approvals in %s (GH pr comments <= 10 && devstats <=20): %d\n",
+			repositoryGH, len(lowPRComments))
 		for _, id := range lowPRComments {
 			fmt.Printf("%s\n", id)
 		}
