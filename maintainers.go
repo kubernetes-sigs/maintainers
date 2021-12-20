@@ -117,13 +117,13 @@ func main() {
 	sort.Strings(missingIDs)
 	fmt.Printf("\n\n>>>>> Missing Contributions (devstats == 0): %d\n", len(missingIDs))
 	for _, id := range missingIDs {
-		fmt.Printf("%#v\n", id)
+		fmt.Printf("%s\n", id)
 	}
 
 	if !skipGH {
 		fmt.Printf("\n\n>>>>> Low reviews/approvals (GH pr comments <= 10 && devstats <=20): %d\n", len(lowPRComments))
 		for _, id := range lowPRComments {
-			fmt.Printf("%#v\n", id)
+			fmt.Printf("%s\n", id)
 		}
 	}
 
