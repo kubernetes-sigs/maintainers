@@ -28,43 +28,8 @@ func main() {
 		panic(err)
 	}
 
-	userIDs := sets.String{}
-	var repoAliases map[string][]string
-	aliasPath, _ := filepath.Abs(filepath.Join(pwd, "OWNERS_ALIASES"))
-	if _, err := os.Stat(aliasPath); err == nil {
-		fmt.Printf("Processing %s\n", aliasPath)
-		configAliases, err := getOwnerAliases(aliasPath)
-		if err != nil {
-			panic(err)
-		}
-		for _, ids := range configAliases.RepoAliases {
-			userIDs.Insert(ids...)
-		}
-		repoAliases = configAliases.RepoAliases
-		fmt.Printf("Found %d unique aliases\n", len(repoAliases))
-	}
-
-	files, err := getOwnerFiles(pwd)
-	if err != nil {
-		panic(err)
-	}
-	for _, file := range files {
-		fmt.Printf("Processing %s\n", file)
-		configOwners, err := getOwnersInfo(file)
-		if err != nil {
-			panic(err)
-		}
-		for _, filterInfo := range configOwners.Filters {
-			userIDs.Insert(filterInfo.Approvers...)
-			userIDs.Insert(filterInfo.Reviewers...)
-		}
-		userIDs.Insert(configOwners.Approvers...)
-		userIDs.Insert(configOwners.Reviewers...)
-	}
-
-	for key, _ := range repoAliases {
-		userIDs.Delete(key)
-	}
+	userIDs, repoAliases, files := getOwnersAndAliases(pwd)
+	fmt.Printf("Found %d unique aliases\n", len(repoAliases))
 
 	uniqueUsers := userIDs.List()
 	fmt.Printf("Found %d unique users\n", len(uniqueUsers))
@@ -133,6 +98,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		aliasPath, _ := filepath.Abs(filepath.Join(pwd, "OWNERS_ALIASES"))
 		if _, err := os.Stat(aliasPath); err == nil {
 			files = append(files, aliasPath)
 		}
@@ -149,4 +115,44 @@ func main() {
 			}
 		}
 	}
+}
+
+func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string) {
+	userIDs := sets.String{}
+	var repoAliases map[string][]string
+	aliasPath, _ := filepath.Abs(filepath.Join(pwd, "OWNERS_ALIASES"))
+	if _, err := os.Stat(aliasPath); err == nil {
+		fmt.Printf("Processing %s\n", aliasPath)
+		configAliases, err := getOwnerAliases(aliasPath)
+		if err != nil {
+			panic(err)
+		}
+		for _, ids := range configAliases.RepoAliases {
+			userIDs.Insert(ids...)
+		}
+		repoAliases = configAliases.RepoAliases
+	}
+
+	files, err := getOwnerFiles(pwd)
+	if err != nil {
+		panic(err)
+	}
+	for _, file := range files {
+		fmt.Printf("Processing %s\n", file)
+		configOwners, err := getOwnersInfo(file)
+		if err != nil {
+			panic(err)
+		}
+		for _, filterInfo := range configOwners.Filters {
+			userIDs.Insert(filterInfo.Approvers...)
+			userIDs.Insert(filterInfo.Reviewers...)
+		}
+		userIDs.Insert(configOwners.Approvers...)
+		userIDs.Insert(configOwners.Reviewers...)
+	}
+
+	for key, _ := range repoAliases {
+		userIDs.Delete(key)
+	}
+	return userIDs, repoAliases, files
 }
