@@ -70,7 +70,10 @@ func main() {
 		}
 	}
 
-	lowPRComments := fetchGithubPRCommentCounts(ownerContribs)
+	var lowPRComments []string
+	if !skipGH {
+		lowPRComments = fetchGithubPRCommentCounts(ownerContribs)
+	}
 
 	// Sort by descending order of contributions/comments in devstats
 	sort.Slice(ownerContribs, func(i, j int) bool {
@@ -119,17 +122,15 @@ func fetchGithubPRCommentCounts(ownerContribs []Contribution) []string {
 	for count, item := range ownerContribs {
 		commentCount = -1
 		var err error
-		if !skipGH {
+		commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
+		for commentCount == -1 && err == nil {
+			time.Sleep(5 * time.Second)
 			commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
-			for commentCount == -1 && err == nil {
-				time.Sleep(5 * time.Second)
-				commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
-			}
-			if item.ContribCount <= 20 && commentCount <= 10 {
-				lowPRComments = append(lowPRComments, item.ID)
-			}
-			time.Sleep(2 * time.Second)
 		}
+		if item.ContribCount <= 20 && commentCount <= 10 {
+			lowPRComments = append(lowPRComments, item.ID)
+		}
+		time.Sleep(2 * time.Second)
 		ownerContribs[count].CommentCount = commentCount
 	}
 	return lowPRComments
