@@ -32,7 +32,10 @@ func main() {
 		panic(err)
 	}
 
-	userIDs, repoAliases, files := getOwnersAndAliases(pwd)
+	userIDs, repoAliases, files, err := getOwnersAndAliases(pwd)
+	if err != nil {
+		panic(err)
+	}
 	for _, file := range files {
 		fmt.Printf("Processed %s\n", file)
 	}
@@ -90,7 +93,10 @@ func main() {
 	}
 
 	if !dryRun {
-		fixupOwnersFiles(files, missingIDs, lowPRComments)
+		err = fixupOwnersFiles(files, missingIDs, lowPRComments)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -115,29 +121,30 @@ func fetchGithubPRCommentCounts(ownerContribs []Contribution, err error) []strin
 	return lowPRComments
 }
 
-func fixupOwnersFiles(files []string, missingIDs []string, lowPRComments []string) {
+func fixupOwnersFiles(files []string, missingIDs []string, lowPRComments []string) error {
 	for _, path := range files {
 		err := removeUserFromOWNERS(path, missingIDs)
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
 	for _, path := range files {
 		err := removeUserFromOWNERS(path, lowPRComments)
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
+	return nil
 }
 
-func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string) {
+func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string, error) {
 	userIDs := sets.String{}
 	var repoAliases map[string][]string
 	aliasPath, _ := filepath.Abs(filepath.Join(pwd, "OWNERS_ALIASES"))
 	if _, err := os.Stat(aliasPath); err == nil {
 		configAliases, err := getOwnerAliases(aliasPath)
 		if err != nil {
-			panic(err)
+			return nil, nil, nil, err
 		}
 		for _, ids := range configAliases.RepoAliases {
 			userIDs.Insert(ids...)
@@ -147,12 +154,12 @@ func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string
 
 	files, err := getOwnerFiles(pwd)
 	if err != nil {
-		panic(err)
+		return nil, nil, nil, err
 	}
 	for _, file := range files {
 		configOwners, err := getOwnersInfo(file)
 		if err != nil {
-			panic(err)
+			return nil, nil, nil, err
 		}
 		for _, filterInfo := range configOwners.Filters {
 			userIDs.Insert(filterInfo.Approvers...)
@@ -166,5 +173,5 @@ func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string
 		userIDs.Delete(key)
 	}
 	files = append(files, aliasPath)
-	return userIDs, repoAliases, files
+	return userIDs, repoAliases, files, nil
 }
