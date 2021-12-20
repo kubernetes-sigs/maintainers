@@ -19,7 +19,7 @@ func getContributionsForAYear(repository string) (error, []Contribution) {
 		"format": "table"
 	}]
 }`
-	repository = strings.Replace(repository,"/", "", -1)
+	repository = strings.Replace(repository, "/", "", -1)
 	repository = strings.Replace(repository, "-", "", -1)
 	postBody = strings.Replace(
 		postBody,
@@ -35,7 +35,7 @@ func getContributionsForAYear(repository string) (error, []Contribution) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(err, "bad error code from devstats : " + string(resp.StatusCode)), nil
+		return errors.Wrap(err, "bad error code from devstats : "+string(resp.StatusCode)), nil
 	}
 
 	var parsed map[string]map[string]map[string][]Frames
@@ -57,4 +57,3 @@ func getContributionsForAYear(repository string) (error, []Contribution) {
 	}
 	return nil, contribs
 }
-

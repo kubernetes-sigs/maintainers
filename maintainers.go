@@ -13,22 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-type OwnersInfo struct {
-	Filters   map[string]FiltersInfo `json:"filters,omitempty"`
-	Approvers []string               `json:"approvers,omitempty"`
-	Reviewers []string               `json:"reviewers,omitempty"`
-}
-
-type FiltersInfo struct {
-	Approvers []string `json:"approvers,omitempty"`
-	Reviewers []string `json:"reviewers,omitempty"`
-}
-
-// Aliases defines groups of people to be used in OWNERS files
-type Aliases struct {
-	RepoAliases map[string][]string `json:"aliases,omitempty"`
-}
-
 func main() {
 	var fixupFlag, skipGH bool
 	var repository string
@@ -53,7 +37,7 @@ func main() {
 			panic(err)
 		}
 		for _, ids := range configAliases.RepoAliases {
-			InsertID(userIDs, ids...)
+			userIDs.Insert(ids...)
 		}
 		repoAliases = configAliases.RepoAliases
 		fmt.Printf("Found %d unique aliases\n", len(repoAliases))
@@ -70,11 +54,11 @@ func main() {
 			panic(err)
 		}
 		for _, filterInfo := range configOwners.Filters {
-			InsertID(userIDs, filterInfo.Approvers...)
-			InsertID(userIDs, filterInfo.Reviewers...)
+			userIDs.Insert(filterInfo.Approvers...)
+			userIDs.Insert(filterInfo.Reviewers...)
 		}
-		InsertID(userIDs, configOwners.Approvers...)
-		InsertID(userIDs, configOwners.Reviewers...)
+		userIDs.Insert(configOwners.Approvers...)
+		userIDs.Insert(configOwners.Reviewers...)
 	}
 
 	for key, _ := range repoAliases {
@@ -163,27 +147,4 @@ func main() {
 			}
 		}
 	}
-}
-
-func InsertID(s sets.String, ids ...string) {
-	sort.Strings(ids)
-	for _, id := range ids {
-		s.Insert(id)
-	}
-}
-
-
-type Frames struct {
-	Schema map[string]interface{} `json:"schema,omitempty"`
-	Data   Values                 `json:"data,omitempty"`
-}
-
-type Values struct {
-	Items [][]interface{} `json:"values,omitempty"`
-}
-
-type Contribution struct {
-	ID    string
-	alias string
-	Count int
 }

@@ -167,4 +167,3 @@ func removeUserFromApproversAndReviewers(mappingNode *yaml3.Node, user string) b
 	}
 	return foundInApproverList
 }
-
