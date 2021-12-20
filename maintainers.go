@@ -33,9 +33,11 @@ func main() {
 	}
 
 	userIDs, repoAliases, files := getOwnersAndAliases(pwd)
-	fmt.Printf("Found %d unique aliases\n", len(repoAliases))
-
+	for _, file := range files {
+		fmt.Printf("Processed %s\n", file)
+	}
 	uniqueUsers := userIDs.List()
+	fmt.Printf("Found %d unique aliases\n", len(repoAliases))
 	fmt.Printf("Found %d unique users\n", len(uniqueUsers))
 
 	err, contribs := getContributionsForAYear(repositoryDS)
@@ -56,6 +58,7 @@ func main() {
 		}
 	}
 
+	// Sort by descending order of contributions in devstats
 	sort.Slice(ownerContribs, func(i, j int) bool {
 		return ownerContribs[i].ContribCount > ownerContribs[j].ContribCount
 	})
@@ -87,11 +90,11 @@ func main() {
 	}
 
 	if !dryRun {
-		fixupOwnersFiles(files, err, pwd, missingIDs, lowPRComments)
+		fixupOwnersFiles(files, missingIDs, lowPRComments)
 	}
 }
 
-func fetchGithubPRCommentCounts(ownerContribs []Contribution, err error) ([]string) {
+func fetchGithubPRCommentCounts(ownerContribs []Contribution, err error) []string {
 	var lowPRComments []string
 	var commentCount int
 	for count, item := range ownerContribs {
@@ -112,23 +115,15 @@ func fetchGithubPRCommentCounts(ownerContribs []Contribution, err error) ([]stri
 	return lowPRComments
 }
 
-func fixupOwnersFiles(files []string, err error, pwd string, missingIDs []string, lowPRComments []string) {
-	files, err = getOwnerFiles(pwd)
-	if err != nil {
-		panic(err)
-	}
-	aliasPath, _ := filepath.Abs(filepath.Join(pwd, "OWNERS_ALIASES"))
-	if _, err := os.Stat(aliasPath); err == nil {
-		files = append(files, aliasPath)
-	}
+func fixupOwnersFiles(files []string, missingIDs []string, lowPRComments []string) {
 	for _, path := range files {
-		err = removeUserFromOWNERS(path, missingIDs)
+		err := removeUserFromOWNERS(path, missingIDs)
 		if err != nil {
 			panic(err)
 		}
 	}
 	for _, path := range files {
-		err = removeUserFromOWNERS(path, lowPRComments)
+		err := removeUserFromOWNERS(path, lowPRComments)
 		if err != nil {
 			panic(err)
 		}
@@ -140,7 +135,6 @@ func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string
 	var repoAliases map[string][]string
 	aliasPath, _ := filepath.Abs(filepath.Join(pwd, "OWNERS_ALIASES"))
 	if _, err := os.Stat(aliasPath); err == nil {
-		fmt.Printf("Processing %s\n", aliasPath)
 		configAliases, err := getOwnerAliases(aliasPath)
 		if err != nil {
 			panic(err)
@@ -156,7 +150,6 @@ func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string
 		panic(err)
 	}
 	for _, file := range files {
-		fmt.Printf("Processing %s\n", file)
 		configOwners, err := getOwnersInfo(file)
 		if err != nil {
 			panic(err)
@@ -172,5 +165,6 @@ func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string
 	for key, _ := range repoAliases {
 		userIDs.Delete(key)
 	}
+	files = append(files, aliasPath)
 	return userIDs, repoAliases, files
 }

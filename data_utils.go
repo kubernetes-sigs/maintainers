@@ -26,7 +26,7 @@ type Values struct {
 }
 
 type Contribution struct {
-	ID    string
+	ID           string
 	alias        string
 	ContribCount int
 	CommentCount int
