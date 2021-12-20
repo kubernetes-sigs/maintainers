@@ -13,13 +13,17 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-func main() {
-	var dryRun, skipGH bool
-	var repositoryDS, repositoryGH string
+var dryRun, skipGH bool
+var repositoryDS, repositoryGH string
+
+func init() {
 	pflag.BoolVarP(&dryRun, "dryrun", "r", true, "do not modify any files")
 	pflag.BoolVarP(&skipGH, "skip-github", "s", false, "skip github PR count check")
 	pflag.StringVarP(&repositoryDS, "repository-devstats", "d", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
 	pflag.StringVarP(&repositoryGH, "repository-github", "g", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
+}
+
+func main() {
 	pflag.Parse()
 
 	fmt.Printf("Running script : %s\n", time.Now().Format("01-02-2006 15:04:05"))
