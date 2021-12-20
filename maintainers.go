@@ -61,14 +61,16 @@ func main() {
 		}
 	}
 
+	lowPRComments := fetchGithubPRCommentCounts(ownerContribs)
+
 	// Sort by descending order of contributions in devstats
 	sort.Slice(ownerContribs, func(i, j int) bool {
 		return ownerContribs[i].ContribCount > ownerContribs[j].ContribCount
 	})
 
+
 	fmt.Printf("\n\n>>>>> Contributions from %s devstats repo and %s github repo : %d\n", repositoryDS, repositoryGH, len(ownerContribs))
 	fmt.Printf(">>>>> GitHub ID : Devstats contrib count : GitHub PR comment count\n")
-	lowPRComments := fetchGithubPRCommentCounts(ownerContribs, err)
 	for _, item := range ownerContribs {
 		if item.ID != item.alias {
 			fmt.Printf("%s(%s) : %d : %d \n", item.ID, item.alias, item.ContribCount, item.CommentCount)
@@ -100,13 +102,13 @@ func main() {
 	}
 }
 
-func fetchGithubPRCommentCounts(ownerContribs []Contribution, err error) []string {
+func fetchGithubPRCommentCounts(ownerContribs []Contribution) []string {
 	var lowPRComments []string
 	var commentCount int
 	for count, item := range ownerContribs {
 		commentCount = -1
 		if !skipGH {
-			commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
+			commentCount, err := fetchPRCommentCount(item.ID, repositoryGH)
 			for commentCount == -1 && err == nil {
 				time.Sleep(5 * time.Second)
 				commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
