@@ -13,14 +13,15 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-var dryRun, skipGH bool
+var dryRun, skipGH, skipDS bool
 var repositoryDS, repositoryGH string
 
 func init() {
-	pflag.BoolVarP(&dryRun, "dryrun", "r", true, "do not modify any files")
-	pflag.BoolVarP(&skipGH, "skip-github", "s", false, "skip github PR count check")
-	pflag.StringVarP(&repositoryDS, "repository-devstats", "d", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
-	pflag.StringVarP(&repositoryGH, "repository-github", "g", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
+	pflag.BoolVar(&dryRun, "dryrun", true, "do not modify any files")
+	pflag.BoolVar(&skipGH, "skip-github", false, "skip github PR count check")
+	pflag.BoolVar(&skipDS, "skip-devstats", false, "skip devstat contributions count check")
+	pflag.StringVar(&repositoryDS, "repository-devstats", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
+	pflag.StringVar(&repositoryGH, "repository-github", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
 }
 
 func main() {
@@ -43,21 +44,29 @@ func main() {
 	fmt.Printf("Found %d unique aliases\n", len(repoAliases))
 	fmt.Printf("Found %d unique users\n", len(uniqueUsers))
 
-	err, contribs := getContributionsForAYear(repositoryDS)
-	if err != nil {
-		panic(err)
-	}
-	if contribs == nil || len(contribs) == 0 {
-		panic("unable to find any contributions in repository : " + repositoryDS)
-	}
 	var ownerContribs []Contribution
-	for _, id := range uniqueUsers {
-		for _, item := range contribs {
-			if strings.ToLower(item.ID) == strings.ToLower(id) {
-				ownerContribs = append(ownerContribs, Contribution{id, item.ID, item.ContribCount, -1})
-				userIDs.Delete(id)
-				break
+
+	if !skipDS {
+		err, contribs := getContributionsForAYear(repositoryDS)
+		if err != nil {
+			panic(err)
+		}
+		if contribs == nil || len(contribs) == 0 {
+			panic("unable to find any contributions in repository : " + repositoryDS)
+		}
+		for _, id := range uniqueUsers {
+			for _, item := range contribs {
+				if strings.ToLower(item.ID) == strings.ToLower(id) {
+					ownerContribs = append(ownerContribs, Contribution{id, item.ID, item.ContribCount, -1})
+					userIDs.Delete(id)
+					break
+				}
 			}
+		}
+	} else {
+		for _, id := range uniqueUsers {
+			ownerContribs = append(ownerContribs, Contribution{id, id, -1, -1})
+			userIDs.Delete(id)
 		}
 	}
 
@@ -81,9 +90,11 @@ func main() {
 
 	missingIDs := userIDs.List()
 	sort.Strings(missingIDs)
-	fmt.Printf("\n\n>>>>> Missing Contributions in %s (devstats == 0): %d\n", repositoryDS, len(missingIDs))
-	for _, id := range missingIDs {
-		fmt.Printf("%s\n", id)
+	if !skipDS {
+		fmt.Printf("\n\n>>>>> Missing Contributions in %s (devstats == 0): %d\n", repositoryDS, len(missingIDs))
+		for _, id := range missingIDs {
+			fmt.Printf("%s\n", id)
+		}
 	}
 
 	if !skipGH {
@@ -107,8 +118,9 @@ func fetchGithubPRCommentCounts(ownerContribs []Contribution) []string {
 	var commentCount int
 	for count, item := range ownerContribs {
 		commentCount = -1
+		var err error
 		if !skipGH {
-			commentCount, err := fetchPRCommentCount(item.ID, repositoryGH)
+			commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
 			for commentCount == -1 && err == nil {
 				time.Sleep(5 * time.Second)
 				commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
