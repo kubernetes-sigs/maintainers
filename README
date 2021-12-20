@@ -1,4 +1,0 @@
-Parse OWNERS, OWNER_ALIASES in kubernetes/kubernetes then pull information from devstats:
-https://k8s.devstats.cncf.io/d/13/developer-activity-counts-by-repository-group?orgId=1&var-period_name=Last%20year&var-metric=contributions&var-repogroup_name=All&var-repo_name=kubernetes%2Fkubernetes&var-country_name=All
-
-and print the github id and contribution
