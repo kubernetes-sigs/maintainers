@@ -49,36 +49,25 @@ func main() {
 	for _, id := range uniqueUsers {
 		for _, item := range contribs {
 			if strings.ToLower(item.ID) == strings.ToLower(id) {
-				ownerContribs = append(ownerContribs, Contribution{id, item.ID, item.Count})
+				ownerContribs = append(ownerContribs, Contribution{id, item.ID, item.ContribCount, -1})
 				userIDs.Delete(id)
 				break
 			}
 		}
 	}
 
+	sort.Slice(ownerContribs, func(i, j int) bool {
+		return ownerContribs[i].ContribCount > ownerContribs[j].ContribCount
+	})
+
 	fmt.Printf("\n\n>>>>> Contributions from %s devstats repo and %s github repo : %d\n", repositoryDS, repositoryGH, len(ownerContribs))
 	fmt.Printf(">>>>> GitHub ID : Devstats contrib count : GitHub PR comment count\n")
-	sort.Slice(ownerContribs, func(i, j int) bool {
-		return ownerContribs[i].Count > ownerContribs[j].Count
-	})
-	var lowPRComments []string
+	lowPRComments := fetchGithubPRCommentCounts(ownerContribs, err)
 	for _, item := range ownerContribs {
-		commentCount := -1
-		if !skipGH {
-			commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
-			for commentCount == -1 && err == nil {
-				time.Sleep(5 * time.Second)
-				commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
-			}
-			if item.Count <= 20 && commentCount <= 10 {
-				lowPRComments = append(lowPRComments, item.ID)
-			}
-			time.Sleep(2 * time.Second)
-		}
 		if item.ID != item.alias {
-			fmt.Printf("%s(%s) : %d : %d \n", item.ID, item.alias, item.Count, commentCount)
+			fmt.Printf("%s(%s) : %d : %d \n", item.ID, item.alias, item.ContribCount, item.CommentCount)
 		} else {
-			fmt.Printf("%s : %d : %d \n", item.ID, item.Count, commentCount)
+			fmt.Printf("%s : %d : %d \n", item.ID, item.ContribCount, item.CommentCount)
 		}
 	}
 
@@ -100,6 +89,27 @@ func main() {
 	if !dryRun {
 		fixupOwnersFiles(files, err, pwd, missingIDs, lowPRComments)
 	}
+}
+
+func fetchGithubPRCommentCounts(ownerContribs []Contribution, err error) ([]string) {
+	var lowPRComments []string
+	var commentCount int
+	for count, item := range ownerContribs {
+		commentCount = -1
+		if !skipGH {
+			commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
+			for commentCount == -1 && err == nil {
+				time.Sleep(5 * time.Second)
+				commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
+			}
+			if item.ContribCount <= 20 && commentCount <= 10 {
+				lowPRComments = append(lowPRComments, item.ID)
+			}
+			time.Sleep(2 * time.Second)
+		}
+		ownerContribs[count].CommentCount = commentCount
+	}
+	return lowPRComments
 }
 
 func fixupOwnersFiles(files []string, err error, pwd string, missingIDs []string, lowPRComments []string) {

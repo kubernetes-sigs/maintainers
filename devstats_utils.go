@@ -53,7 +53,7 @@ func getContributionsForAYear(repository string) (error, []Contribution) {
 
 	var contribs []Contribution
 	for i := 0; i < len(foo); i++ {
-		contribs = append(contribs, Contribution{foo[i].(string), "", int(bar[i].(float64))})
+		contribs = append(contribs, Contribution{foo[i].(string), "", int(bar[i].(float64)), -1})
 	}
 	return nil, contribs
 }
