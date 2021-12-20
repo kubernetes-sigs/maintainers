@@ -124,15 +124,18 @@ func fetchGithubPRCommentCounts(ownerContribs []Contribution) []string {
 		var err error
 		commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
 		for commentCount == -1 && err == nil {
+			fmt.Printf(".")
 			time.Sleep(5 * time.Second)
 			commentCount, err = fetchPRCommentCount(item.ID, repositoryGH)
 		}
 		if item.ContribCount <= 20 && commentCount <= 10 {
 			lowPRComments = append(lowPRComments, item.ID)
 		}
+		fmt.Printf(".")
 		time.Sleep(2 * time.Second)
 		ownerContribs[count].CommentCount = commentCount
 	}
+	fmt.Printf("\n")
 	return lowPRComments
 }
 
