@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-var dryRun, skipGH, skipDS bool
+var dryRun, skipGH, skipDS, export bool
 var repositoryDS, repositoryGH string
 var includes, excludes []string
 
@@ -25,6 +25,7 @@ func init() {
 	pflag.BoolVar(&skipDS, "skip-devstats", false, "skip devstat contributions count check")
 	pflag.StringVar(&repositoryDS, "repository-devstats", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
 	pflag.StringVar(&repositoryGH, "repository-github", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
+	pflag.BoolVar(&export, "export", false, "export contents of all owners related files as output.csv")
 }
 
 func main() {
@@ -117,6 +118,13 @@ func main() {
 			panic(err)
 		}
 	}
+
+	if export {
+		err = exportOwnersAndAliases(pwd)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 func fetchGithubPRCommentCounts(ownerContribs []Contribution) []string {
@@ -197,4 +205,88 @@ func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string
 	}
 	files = append(files, aliasPath)
 	return userIDs, repoAliases, files, nil
+}
+
+func exportOwnersAndAliases(pwd string) error {
+	var repoAliases map[string][]string
+
+	fmt.Println("\n\n =========== Begin CSV ===========")
+	aliasPath, _ := filepath.Abs(filepath.Join(pwd, "OWNERS_ALIASES"))
+	if _, err := os.Stat(aliasPath); err == nil {
+		configAliases, err := getOwnerAliases(aliasPath)
+		if err != nil {
+			return err
+		}
+		//for _, ids := range configAliases.RepoAliases {
+		//	userIDs.Insert(ids...)
+		//}
+		repoAliases = configAliases.RepoAliases
+	}
+
+	files, err := getOwnerFiles(pwd)
+	if err != nil {
+		return err
+	}
+
+	type Row struct {
+		id    string
+		alias string
+		file  string
+	}
+	var rows []Row
+
+	for _, file := range files {
+		userIDs := sets.String{}
+		aliases := sets.String{}
+		configOwners, err := getOwnersInfo(file)
+		if err != nil {
+			return err
+		}
+		for _, filterInfo := range configOwners.Filters {
+			userIDs.Insert(filterInfo.Approvers...)
+			userIDs.Insert(filterInfo.Reviewers...)
+		}
+		userIDs.Insert(configOwners.Approvers...)
+		userIDs.Insert(configOwners.Reviewers...)
+		for key, _ := range repoAliases {
+			if userIDs.Has(key) {
+				userIDs.Delete(key)
+				aliases.Insert(key)
+			}
+		}
+
+		for _, id := range userIDs.List() {
+			rows = append(rows, Row{id, "", file})
+		}
+		for _, alias := range aliases.List() {
+			ids, ok := repoAliases[alias]
+			if ok {
+				for _, id := range ids {
+					rows = append(rows, Row{id, alias, file})
+				}
+			}
+		}
+	}
+
+	sort.Slice(rows, func(i, j int) bool {
+		switch strings.Compare(rows[i].id, rows[j].id) {
+		case -1:
+			return true
+		case 1:
+			return false
+		}
+		switch strings.Compare(rows[i].alias, rows[j].alias) {
+		case -1:
+			return true
+		case 1:
+			return false
+		}
+		return rows[i].file > rows[j].file
+	})
+	for _, row := range rows {
+		fmt.Printf("%s,%s,%s\n", row.id, row.alias, row.file)
+	}
+	fmt.Println(" =========== End CSV ===========")
+
+	return nil
 }
