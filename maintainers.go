@@ -15,8 +15,11 @@ import (
 
 var dryRun, skipGH, skipDS bool
 var repositoryDS, repositoryGH string
+var includes, excludes []string
 
 func init() {
+	pflag.StringSliceVar(&includes, "include", []string{}, "add these comma-separated list of users to prune from OWNERS")
+	pflag.StringSliceVar(&excludes, "exclude", []string{}, "do not prune these comma-separated list of users from OWNERS")
 	pflag.BoolVar(&dryRun, "dryrun", true, "do not modify any files")
 	pflag.BoolVar(&skipGH, "skip-github", false, "skip github PR count check")
 	pflag.BoolVar(&skipDS, "skip-devstats", false, "skip devstat contributions count check")
@@ -140,14 +143,16 @@ func fetchGithubPRCommentCounts(ownerContribs []Contribution) []string {
 }
 
 func fixupOwnersFiles(files []string, missingIDs []string, lowPRComments []string) error {
+	userIDs := sets.String{}
+
+	userIDs.Insert(missingIDs...)
+	userIDs.Insert(lowPRComments...)
+	userIDs.Insert(includes...)
+	userIDs.Delete(excludes...)
+
+	list := userIDs.List()
 	for _, path := range files {
-		err := removeUserFromOWNERS(path, missingIDs)
-		if err != nil {
-			return err
-		}
-	}
-	for _, path := range files {
-		err := removeUserFromOWNERS(path, lowPRComments)
+		err := removeUserFromOWNERS(path, list)
 		if err != nil {
 			return err
 		}
