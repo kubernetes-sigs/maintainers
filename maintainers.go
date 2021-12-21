@@ -210,16 +210,12 @@ func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string
 func exportOwnersAndAliases(pwd string) error {
 	var repoAliases map[string][]string
 
-	fmt.Println("\n\n =========== Begin CSV ===========")
 	aliasPath, _ := filepath.Abs(filepath.Join(pwd, "OWNERS_ALIASES"))
 	if _, err := os.Stat(aliasPath); err == nil {
 		configAliases, err := getOwnerAliases(aliasPath)
 		if err != nil {
 			return err
 		}
-		//for _, ids := range configAliases.RepoAliases {
-		//	userIDs.Insert(ids...)
-		//}
 		repoAliases = configAliases.RepoAliases
 	}
 
@@ -283,10 +279,21 @@ func exportOwnersAndAliases(pwd string) error {
 		}
 		return rows[i].file > rows[j].file
 	})
-	for _, row := range rows {
-		fmt.Printf("%s,%s,%s\n", row.id, row.alias, row.file)
+	fmt.Printf("\n\n>>>>> generating export.csv\n")
+	f, err := os.Create("export.csv")
+	if err != nil {
+		panic(err)
 	}
-	fmt.Println(" =========== End CSV ===========")
+	for _, row := range rows {
+		_, err = fmt.Fprintf(f, "%s,%s,%s\n", row.id, row.alias, row.file)
+		if err != nil {
+			return err
+		}
+	}
+	err = f.Close()
+	if err != nil {
+		panic(err)
+	}
 
 	return nil
 }
