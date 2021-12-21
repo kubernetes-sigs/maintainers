@@ -10,12 +10,12 @@ import (
 	"strings"
 )
 
-func getContributionsForAYear(repository string) (error, []Contribution) {
+func getContributionsForAYear(repository string, period string) (error, []Contribution) {
 	postBody := `{
 	"queries": [{
 		"refId": "A",
 		"datasourceId": 1,
-		"rawSql": "select sub.name as name, sub.value from (select row_number() over (order by sum(value) desc) as \"Rank\", split_part(name, '$$$', 1) as name, sum(value) as value from shdev_repos where series = 'hdev_contributionsallall' and period = 'y' group by split_part(name, '$$$', 1)) sub",
+		"rawSql": "select sub.name as name, sub.value from (select row_number() over (order by sum(value) desc) as \"Rank\", split_part(name, '$$$', 1) as name, sum(value) as value from shdev_repos where series = 'hdev_contributionsallall' and period = '%s' group by split_part(name, '$$$', 1)) sub",
 		"format": "table"
 	}]
 }`
@@ -23,7 +23,7 @@ func getContributionsForAYear(repository string) (error, []Contribution) {
 	repository = strings.Replace(repository, "-", "", -1)
 	repository = strings.Replace(repository, ".", "", -1)
 	postBody = strings.Replace(
-		postBody,
+		fmt.Sprintf(postBody, period),
 		"hdev_contributionsallall",
 		fmt.Sprintf("hdev_contributions%sall", repository),
 		-1)

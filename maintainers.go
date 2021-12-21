@@ -14,7 +14,7 @@ import (
 )
 
 var dryRun, skipGH, skipDS, export bool
-var repositoryDS, repositoryGH string
+var repositoryDS, repositoryGH, periodDS string
 var includes, excludes []string
 
 func init() {
@@ -26,6 +26,7 @@ func init() {
 	pflag.StringVar(&repositoryDS, "repository-devstats", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
 	pflag.StringVar(&repositoryGH, "repository-github", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
 	pflag.BoolVar(&export, "export", false, "export contents of all owners related files as output.csv")
+	pflag.StringVar(&periodDS, "period-devstats", "y", "one of \"y\" (year) \"q\" (quarter) \"m\" (month) ")
 }
 
 func main() {
@@ -51,7 +52,7 @@ func main() {
 	var ownerContribs []Contribution
 
 	if !skipDS {
-		err, contribs := getContributionsForAYear(repositoryDS)
+		err, contribs := getContributionsForAYear(repositoryDS, periodDS)
 		if err != nil {
 			panic(err)
 		}
