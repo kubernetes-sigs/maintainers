@@ -85,5 +85,24 @@ func printFilesForLabels(pwd string) error {
 			fmt.Printf("\t%s\n", file)
 		}
 	}
+
+	fmt.Printf("\n\n>>>>> generating labels.csv\n")
+	f, err := os.Create("labels.csv")
+	if err != nil {
+		return err
+	}
+	for _, label := range labels {
+		for _, file := range labelFiles[label].List() {
+			_, err := fmt.Fprintf(f, "%s,%s\n", label, file)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	err = f.Close()
+	if err != nil {
+		panic(err)
+	}
+
 	return nil
 }
