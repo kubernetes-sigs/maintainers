@@ -4,12 +4,18 @@ https://k8s.devstats.cncf.io/d/13/developer-activity-counts-by-repository-group?
 and print the github id, pr comment count and devstats contribution count as well.
 
 ```
-[dims@dims-m1 17:41] ~/go/src/k8s.io/k8s.io ⟩ ../maintainers/maintainers --help
-Usage of ../maintainers/maintainers:
+[dims@dims-m1 20:58] ~/go/src/k8s.io/kubernetes ⟩ ../maintainers/maintainers help prune
+Remove stale github ids from OWNERS and OWNERS_ALIASES
+
+Usage:
+  maintainers prune [flags]
+
+Flags:
       --dryrun                       do not modify any files (default true)
       --exclude strings              do not prune these comma-separated list of users from OWNERS
-      --export                       export contents of all owners related files as output.csv
+  -h, --help                         help for prune
       --include strings              add these comma-separated list of users to prune from OWNERS
+      --period-devstats string       one of "y" (year) "q" (quarter) "m" (month)  (default "y")
       --repository-devstats string   defaults to "kubernetes/kubernetes" repository (default "kubernetes/kubernetes")
       --repository-github string     defaults to "kubernetes/kubernetes" repository (default "kubernetes/kubernetes")
       --skip-devstats                skip devstat contributions count check
@@ -24,5 +30,18 @@ Notes:
   `--skip-devstats` or `--skip-github`
 - Use `include` or `exclude` to tune who gets removed
 - You can even add both the skips and use the `include` to remove specific users
-- use the `--export` to generate a CSV file with all the info in OWNERS, each line will
+
+```
+[dims@dims-m1 20:59] ~/go/src/k8s.io/kubernetes ⟩ ../maintainers/maintainers help export
+export contents of OWNERS and OWNERS_ALIASES as parsable csv file
+
+Usage:
+maintainers export [flags]
+
+Flags:
+-h, --help   help for export
+```
+
+Notes:
+- use the `export` to generate a CSV file with all the info in OWNERS, each line will
   have the github id, alias and the name of the file
