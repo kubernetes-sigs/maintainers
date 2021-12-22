@@ -20,7 +20,14 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
+	"path/filepath"
+	"sort"
+	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/util/sets"
+
+	"maintainers/pkg/utils"
 )
 
 // exportCmd represents the export command
@@ -43,4 +50,95 @@ var exportCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(exportCmd)
+}
+
+func exportOwnersAndAliases(pwd string) error {
+	var repoAliases map[string][]string
+
+	aliasPath, _ := filepath.Abs(filepath.Join(pwd, "OWNERS_ALIASES"))
+	if _, err := os.Stat(aliasPath); err == nil {
+		configAliases, err := utils.GetOwnerAliases(aliasPath)
+		if err != nil {
+			return err
+		}
+		repoAliases = configAliases.RepoAliases
+	}
+
+	files, err := utils.GetOwnerFiles(pwd)
+	if err != nil {
+		return err
+	}
+
+	type Row struct {
+		id    string
+		alias string
+		file  string
+	}
+	var rows []Row
+
+	for _, file := range files {
+		userIDs := sets.String{}
+		aliases := sets.String{}
+		configOwners, err := utils.GetOwnersInfo(file)
+		if err != nil {
+			return err
+		}
+		for _, filterInfo := range configOwners.Filters {
+			userIDs.Insert(filterInfo.Approvers...)
+			userIDs.Insert(filterInfo.Reviewers...)
+		}
+		userIDs.Insert(configOwners.Approvers...)
+		userIDs.Insert(configOwners.Reviewers...)
+		for key, _ := range repoAliases {
+			if userIDs.Has(key) {
+				userIDs.Delete(key)
+				aliases.Insert(key)
+			}
+		}
+
+		for _, id := range userIDs.List() {
+			rows = append(rows, Row{id, "", file})
+		}
+		for _, alias := range aliases.List() {
+			ids, ok := repoAliases[alias]
+			if ok {
+				for _, id := range ids {
+					rows = append(rows, Row{id, alias, file})
+				}
+			}
+		}
+	}
+
+	sort.Slice(rows, func(i, j int) bool {
+		switch strings.Compare(rows[i].id, rows[j].id) {
+		case -1:
+			return true
+		case 1:
+			return false
+		}
+		switch strings.Compare(rows[i].alias, rows[j].alias) {
+		case -1:
+			return true
+		case 1:
+			return false
+		}
+		return rows[i].file > rows[j].file
+	})
+	fmt.Printf("\n\n>>>>> generating export.csv\n")
+	f, err := os.Create("export.csv")
+	if err != nil {
+		panic(err)
+	}
+	for _, row := range rows {
+		_, err = fmt.Fprintf(f, "%s,%s,%s\n", row.id, row.alias, row.file)
+		if err != nil {
+			return err
+		}
+	}
+	err = f.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	return nil
 }
