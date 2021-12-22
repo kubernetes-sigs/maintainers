@@ -20,6 +20,7 @@ type OwnersInfo struct {
 	Filters   map[string]FiltersInfo `json:"filters,omitempty"`
 	Approvers []string               `json:"approvers,omitempty"`
 	Reviewers []string               `json:"reviewers,omitempty"`
+	Labels    []string               `json:"labels,omitempty"`
 }
 
 type FiltersInfo struct {
