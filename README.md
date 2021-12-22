@@ -45,3 +45,18 @@ Flags:
 Notes:
 - use the `export` to generate a CSV file with all the info in OWNERS, each line will
   have the github id, alias and the name of the file
+
+```
+[dims@dims-m1 08:33] ~/go/src/k8s.io/community ⟩ ../maintainers/maintainers help prettify
+ensure all OWNERS related files are valid yaml and look the same
+
+Usage:
+  maintainers prettify [flags]
+
+Flags:
+  -h, --help         help for prettify
+      --indent int   default indentation (default 2)
+```
+
+ensure OWNERS files to have a consistent format (spaces, line breaks etc) for any automation to be built around
+updating these files.
