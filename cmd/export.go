@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -55,8 +54,8 @@ func init() {
 func exportOwnersAndAliases(pwd string) error {
 	var repoAliases map[string][]string
 
-	aliasPath, _ := filepath.Abs(filepath.Join(pwd, "OWNERS_ALIASES"))
-	if _, err := os.Stat(aliasPath); err == nil {
+	aliasPath, err := utils.GetOwnersAliasesFile(pwd)
+	if err != nil && len(aliasPath) > 0 {
 		configAliases, err := utils.GetOwnerAliases(aliasPath)
 		if err != nil {
 			return err

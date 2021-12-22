@@ -54,6 +54,15 @@ func GetOwnersInfo(file string) (*OwnersInfo, error) {
 	return config, nil
 }
 
+func GetOwnersAliasesFile(root string) (string, error) {
+	var err error
+	aliasPath, _ := filepath.Abs(filepath.Join(root, "OWNERS_ALIASES"))
+	if _, err = os.Stat(aliasPath); err == nil {
+		return aliasPath, nil
+	}
+	return "", err
+}
+
 func GetOwnerFiles(root string) ([]string, error) {
 	var matches []string
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {

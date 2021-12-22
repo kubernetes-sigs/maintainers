@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -186,8 +185,8 @@ func fixupOwnersFiles(files []string, missingIDs []string, lowPRComments []strin
 func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string, error) {
 	userIDs := sets.String{}
 	var repoAliases map[string][]string
-	aliasPath, _ := filepath.Abs(filepath.Join(pwd, "OWNERS_ALIASES"))
-	if _, err := os.Stat(aliasPath); err == nil {
+	aliasPath, err := utils.GetOwnersAliasesFile(pwd)
+	if err != nil && len(aliasPath) > 0 {
 		configAliases, err := utils.GetOwnerAliases(aliasPath)
 		if err != nil {
 			return nil, nil, nil, err
