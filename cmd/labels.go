@@ -46,7 +46,10 @@ var labelsCmd = &cobra.Command{
 	},
 }
 
+var labelsFile string
+
 func init() {
+	labelsCmd.Flags().StringVar(&labelsFile, "output", "labels.csv", "output file path")
 	rootCmd.AddCommand(labelsCmd)
 }
 
@@ -86,8 +89,8 @@ func printFilesForLabels(pwd string) error {
 		}
 	}
 
-	fmt.Printf("\n\n>>>>> generating labels.csv\n")
-	f, err := os.Create("labels.csv")
+	fmt.Printf("\n\n>>>>> generating %s\n", labelsFile)
+	f, err := os.Create(labelsFile)
 	if err != nil {
 		return err
 	}

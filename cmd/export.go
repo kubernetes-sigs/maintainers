@@ -47,7 +47,10 @@ var exportCmd = &cobra.Command{
 	},
 }
 
+var outputFile string
+
 func init() {
+	exportCmd.Flags().StringVar(&outputFile, "output", "export.csv", "output file path")
 	rootCmd.AddCommand(exportCmd)
 }
 
@@ -123,8 +126,8 @@ func exportOwnersAndAliases(pwd string) error {
 		}
 		return rows[i].file > rows[j].file
 	})
-	fmt.Printf("\n\n>>>>> generating export.csv\n")
-	f, err := os.Create("export.csv")
+	fmt.Printf("\n\n>>>>> generating %s\n", outputFile)
+	f, err := os.Create(outputFile)
 	if err != nil {
 		panic(err)
 	}
