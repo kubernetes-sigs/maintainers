@@ -60,3 +60,16 @@ Flags:
 
 ensure OWNERS files to have a consistent format (spaces, line breaks etc) for any automation to be built around
 updating these files.
+
+You can also validate/check if all the urls in a file are correct using `check-urls`
+```
+[dims@dims-m1 11:31] ~/go/src/k8s.io/community ⟩ ~/go/src/github.com/dims/maintainers/maintainers help check-urls
+ensure all the urls in yaml file are still valid
+
+Usage:
+maintainers check-urls [flags]
+
+Flags:
+-h, --help               help for check-urls
+--yaml-file string   validate urls in this yaml file (default "sigs.yaml")
+```
