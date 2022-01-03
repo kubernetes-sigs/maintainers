@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -32,6 +33,7 @@ import (
 var dryRun, skipGH, skipDS bool
 var repositoryDS, repositoryGH, periodDS string
 var includes, excludes []string
+var excludeFiles []string
 
 func init() {
 	pruneCmd.Flags().StringSliceVar(&includes, "include", []string{}, "add these comma-separated list of users to prune from OWNERS")
@@ -42,6 +44,7 @@ func init() {
 	pruneCmd.Flags().StringVar(&repositoryDS, "repository-devstats", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
 	pruneCmd.Flags().StringVar(&repositoryGH, "repository-github", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
 	pruneCmd.Flags().StringVar(&periodDS, "period-devstats", "y", "one of \"y\" (year) \"q\" (quarter) \"m\" (month) ")
+	pruneCmd.Flags().StringSliceVar(&excludeFiles, "exclude-files", []string{}, "do not update these OWNERS files")
 	rootCmd.AddCommand(pruneCmd)
 }
 
@@ -174,12 +177,25 @@ func fixupOwnersFiles(files []string, missingIDs []string, lowPRComments []strin
 
 	list := userIDs.List()
 	for _, path := range files {
+		if isExcludedPath(path, excludeFiles) {
+			continue
+		}
 		err := utils.RemoveUserFromOWNERS(path, list)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func isExcludedPath(a string, list []string) bool {
+	for _, b := range list {
+		pathB, _ := filepath.Abs(b)
+		if pathB == a {
+			return true
+		}
+	}
+	return false
 }
 
 func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string, error) {
@@ -217,6 +233,8 @@ func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string
 	for key, _ := range repoAliases {
 		userIDs.Delete(key)
 	}
-	files = append(files, aliasPath)
+	if len(aliasPath) > 0 {
+		files = append(files, aliasPath)
+	}
 	return userIDs, repoAliases, files, nil
 }
