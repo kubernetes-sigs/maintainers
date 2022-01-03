@@ -186,7 +186,7 @@ func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string
 	userIDs := sets.String{}
 	var repoAliases map[string][]string
 	aliasPath, err := utils.GetOwnersAliasesFile(pwd)
-	if err != nil && len(aliasPath) > 0 {
+	if err == nil && len(aliasPath) > 0 {
 		configAliases, err := utils.GetOwnerAliases(aliasPath)
 		if err != nil {
 			return nil, nil, nil, err
