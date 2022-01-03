@@ -45,6 +45,7 @@ func init() {
 	pruneCmd.Flags().StringVar(&repositoryGH, "repository-github", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
 	pruneCmd.Flags().StringVar(&periodDS, "period-devstats", "y", "one of \"y\" (year) \"q\" (quarter) \"m\" (month) ")
 	pruneCmd.Flags().StringSliceVar(&excludeFiles, "exclude-files", []string{}, "do not update these OWNERS files")
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.AddCommand(pruneCmd)
 }
 
