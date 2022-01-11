@@ -141,6 +141,8 @@ var pruneCmd = &cobra.Command{
 			if err != nil {
 				panic(err)
 			}
+		} else {
+			fmt.Printf("--dryrun is set to true, will skip updating OWNERS and OWNER_ALIASES")
 		}
 	},
 }
