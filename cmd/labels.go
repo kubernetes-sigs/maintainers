@@ -64,7 +64,7 @@ func printFilesForLabels(pwd string) error {
 	for _, file := range files {
 		configOwners, err := utils.GetOwnersInfo(file)
 		if err != nil {
-			return err
+			return fmt.Errorf("error processing %s: %w", file, err)
 		}
 		for _, label := range configOwners.Labels {
 			var ok bool

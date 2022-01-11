@@ -221,7 +221,7 @@ func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string
 	for _, file := range files {
 		configOwners, err := utils.GetOwnersInfo(file)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, fmt.Errorf("error processing %s: %w", file, err)
 		}
 		for _, filterInfo := range configOwners.Filters {
 			userIDs.Insert(filterInfo.Approvers...)

@@ -83,7 +83,7 @@ func exportOwnersAndAliases(pwd string) error {
 		aliases := sets.String{}
 		configOwners, err := utils.GetOwnersInfo(file)
 		if err != nil {
-			return err
+			return fmt.Errorf("error processing %s: %w", file, err)
 		}
 		for _, filterInfo := range configOwners.Filters {
 			userIDs.Insert(filterInfo.Approvers...)
