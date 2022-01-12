@@ -20,11 +20,9 @@ type OwnersInfo struct {
 	Filters   map[string]FiltersInfo `json:"filters,omitempty"`
 	Approvers []string               `json:"approvers,omitempty"`
 	Reviewers []string               `json:"reviewers,omitempty"`
-	EmeritusReviewers []string       `json:"emeritus_reviewers,omitempty"`
 	RequiredReviewers []string 		 `json:"required_reviewers,omitempty"`
 	Labels    []string               `json:"labels,omitempty"`
 	EmeritusApprovers []string       `json:"emeritus_approvers,omitempty"`
-	EmeritusMaintainers []string     `json:"emeritus_maintainers,omitempty"`
 	Options DirOptions               `json:"options,omitempty"`
 }
 
