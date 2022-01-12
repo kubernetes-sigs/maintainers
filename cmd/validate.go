@@ -42,7 +42,7 @@ var validateCmd = &cobra.Command{
 		if err == nil && len(aliasPath) > 0 {
 			_, err := utils.GetOwnerAliases(aliasPath)
 			if err != nil {
-				panic(err)
+				panic(fmt.Errorf("error parsing file: %s - %w", aliasPath, err))
 			}
 		}
 
