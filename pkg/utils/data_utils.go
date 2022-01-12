@@ -17,13 +17,13 @@ limitations under the License.
 package utils
 
 type OwnersInfo struct {
-	Filters   map[string]FiltersInfo `json:"filters,omitempty"`
-	Approvers []string               `json:"approvers,omitempty"`
-	Reviewers []string               `json:"reviewers,omitempty"`
-	RequiredReviewers []string 		 `json:"required_reviewers,omitempty"`
-	Labels    []string               `json:"labels,omitempty"`
-	EmeritusApprovers []string       `json:"emeritus_approvers,omitempty"`
-	Options DirOptions               `json:"options,omitempty"`
+	Filters           map[string]FiltersInfo `json:"filters,omitempty"`
+	Approvers         []string               `json:"approvers,omitempty"`
+	Reviewers         []string               `json:"reviewers,omitempty"`
+	RequiredReviewers []string               `json:"required_reviewers,omitempty"`
+	Labels            []string               `json:"labels,omitempty"`
+	EmeritusApprovers []string               `json:"emeritus_approvers,omitempty"`
+	Options           DirOptions             `json:"options,omitempty"`
 }
 
 type DirOptions struct {
@@ -31,11 +31,11 @@ type DirOptions struct {
 }
 
 type FiltersInfo struct {
-	Approvers []string `json:"approvers,omitempty"`
-	Reviewers []string `json:"reviewers,omitempty"`
-	Labels    []string               `json:"labels,omitempty"`
-	EmeritusApprovers []string       `json:"emeritus_approvers,omitempty"`
-	RequiredReviewers []string       `json:"required_reviewers,omitempty"`
+	Approvers         []string `json:"approvers,omitempty"`
+	Reviewers         []string `json:"reviewers,omitempty"`
+	Labels            []string `json:"labels,omitempty"`
+	EmeritusApprovers []string `json:"emeritus_approvers,omitempty"`
+	RequiredReviewers []string `json:"required_reviewers,omitempty"`
 }
 
 // Aliases defines groups of people to be used in OWNERS files
