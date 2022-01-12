@@ -29,7 +29,7 @@ import (
 // validateCmd represents the validate command
 var validateCmd = &cobra.Command{
 	Use:   "validate",
-	Short: "ensure OWNERS, OWNERS_ALIASES, sigs.yaml have the correct data structure",
+	Short: "ensure OWNERS, OWNERS_ALIASES have the correct data structure",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Running script : %s\n", time.Now().Format("01-02-2006 15:04:05"))
