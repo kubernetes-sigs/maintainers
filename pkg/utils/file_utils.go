@@ -32,7 +32,7 @@ func GetOwnerAliases(filename string) (*Aliases, error) {
 	}
 
 	config := &Aliases{}
-	err = yaml.Unmarshal(yamlFile, &config)
+	err = yaml.UnmarshalStrict(yamlFile, &config)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func GetOwnersInfo(file string) (*OwnersInfo, error) {
 	}
 
 	config := &OwnersInfo{}
-	err = yaml.Unmarshal(yamlFile, &config)
+	err = yaml.UnmarshalStrict(yamlFile, &config)
 	if err != nil {
 		return nil, err
 	}
