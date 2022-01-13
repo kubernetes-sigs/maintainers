@@ -30,9 +30,11 @@ import (
 )
 
 var indent int
+var sigsyaml bool
 
 func init() {
 	prettifyCmd.Flags().IntVar(&indent, "indent", 2, "default indentation")
+	prettifyCmd.Flags().BoolVar(&sigsyaml, "include-sigs-yaml", false, "indent sigs.yaml as well")
 }
 
 // exportCmd represents the export command
@@ -53,8 +55,15 @@ var prettifyCmd = &cobra.Command{
 		}
 
 		aliasPath, err := utils.GetOwnersAliasesFile(pwd)
-		if err != nil && len(aliasPath) > 0 {
+		if err == nil && len(aliasPath) > 0 {
 			files = append(files, aliasPath)
+		}
+
+		if sigsyaml {
+			sigsYamlPath, err := utils.GetSigsYamlFile(pwd)
+			if err == nil && len(sigsYamlPath) > 0 {
+				files = append(files, sigsYamlPath)
+			}
 		}
 
 		for _, path := range files {

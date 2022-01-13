@@ -39,6 +39,20 @@ func GetOwnerAliases(filename string) (*Aliases, error) {
 	return config, nil
 }
 
+func GetSigsYaml(filename string) (*Context, error) {
+	yamlFile, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	config := &Context{}
+	err = yaml.UnmarshalStrict(yamlFile, &config)
+	if err != nil {
+		return nil, err
+	}
+	return config, nil
+}
+
 func GetOwnersInfo(file string) (*OwnersInfo, error) {
 	filename, _ := filepath.Abs(file)
 	yamlFile, err := ioutil.ReadFile(filename)
@@ -81,4 +95,13 @@ func GetOwnerFiles(root string) ([]string, error) {
 		return nil, err
 	}
 	return matches, nil
+}
+
+func GetSigsYamlFile(root string) (string, error) {
+	var err error
+	path, _ := filepath.Abs(filepath.Join(root, "sigs.yaml"))
+	if _, err = os.Stat(path); err == nil {
+		return path, nil
+	}
+	return "", err
 }

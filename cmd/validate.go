@@ -46,6 +46,14 @@ var validateCmd = &cobra.Command{
 			}
 		}
 
+		sigsYamlPath, err := utils.GetSigsYamlFile(pwd)
+		if err == nil && len(sigsYamlPath) > 0 {
+			_, err := utils.GetSigsYaml(sigsYamlPath)
+			if err != nil {
+				panic(fmt.Errorf("error parsing file: %s - %w", sigsYamlPath, err))
+			}
+		}
+
 		files, err := utils.GetOwnerFiles(pwd)
 		if err != nil {
 			panic(err)
