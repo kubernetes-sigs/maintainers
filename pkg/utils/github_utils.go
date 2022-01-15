@@ -24,6 +24,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -73,4 +74,39 @@ func FetchPRCommentCount(user, repository string) (int, error) {
 	}
 
 	return strconv.Atoi(fmt.Sprintf("%v", result["total_count"]))
+}
+
+func GetKubernetesOwnersFiles() (*[]string, error) {
+	resp, err := http.Get("https://api.github.com/repos/kubernetes/kubernetes/git/trees/master?recursive=1")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	dec := json.NewDecoder(resp.Body)
+	if dec == nil {
+		panic("Failed to start decoding JSON data")
+	}
+
+	type Content struct {
+		Files []struct {
+			Path string
+		} `json:"tree"`
+	}
+
+	c := &Content{}
+	err = dec.Decode(&c)
+	if err != nil {
+		return nil, err
+	}
+
+	directories := make([]string, len(c.Files))
+	for _, directory := range c.Files {
+		if len(directory.Path) > 0 &&
+			strings.Index(directory.Path, "/OWNERS") != -1 &&
+			strings.Index(directory.Path, "vendor/") != 0 {
+			directories = append(directories, directory.Path)
+		}
+	}
+	return &directories, nil
 }

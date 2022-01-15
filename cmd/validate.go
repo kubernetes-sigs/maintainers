@@ -19,6 +19,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -29,7 +30,7 @@ import (
 // validateCmd represents the validate command
 var validateCmd = &cobra.Command{
 	Use:   "validate",
-	Short: "ensure OWNERS, OWNERS_ALIASES have the correct data structure",
+	Short: "ensure OWNERS, OWNERS_ALIASES and sigs.yaml have the correct data structure",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Running script : %s\n", time.Now().Format("01-02-2006 15:04:05"))
@@ -46,9 +47,10 @@ var validateCmd = &cobra.Command{
 			}
 		}
 
+		var context *utils.Context
 		sigsYamlPath, err := utils.GetSigsYamlFile(pwd)
 		if err == nil && len(sigsYamlPath) > 0 {
-			_, err := utils.GetSigsYaml(sigsYamlPath)
+			context, err = utils.GetSigsYaml(sigsYamlPath)
 			if err != nil {
 				panic(fmt.Errorf("error parsing file: %s - %w", sigsYamlPath, err))
 			}
@@ -65,7 +67,81 @@ var validateCmd = &cobra.Command{
 				panic(fmt.Errorf("error parsing file: %s - %w", path, err))
 			}
 		}
+
+		groupMap := map[string][]utils.Group{
+			"sigs":          (*context).Sigs,
+			"usergroups":    (*context).UserGroups,
+			"workinggroups": (*context).WorkingGroups,
+			"committees":    (*context).Committees,
+		}
+
+		fileMap, errors := validateOwnersFilesInGroups(&groupMap)
+		errors2 := warnFileMismatchesBetweenKubernetesRepoAndSigsYaml(fileMap)
+		errors = append(errors, errors2...)
+
+		if errors != nil && len(errors) > 0 {
+			for _, err := range errors {
+				fmt.Printf("WARNING: %v\n", err)
+			}
+			//panic("please see errors above")
+		}
 	},
+}
+
+func warnFileMismatchesBetweenKubernetesRepoAndSigsYaml(fileMap map[string]string) []error {
+	var errors []error
+	ownerFiles, err := utils.GetKubernetesOwnersFiles()
+	if err != nil {
+		panic(err)
+	}
+
+	for key, val := range fileMap {
+		if strings.Index(key, "kubernetes/kubernetes") == -1 {
+			continue
+		}
+		found := false
+		for _, file := range *ownerFiles {
+			if len(file) == 0 {
+				continue
+			}
+			if strings.HasSuffix(key, file) {
+				found = true
+			}
+		}
+		if !found {
+			errors = append(errors, fmt.Errorf("file [%s] in section %v is not present in kubernetes/kubernetes", key, val))
+		}
+	}
+
+	for _, file := range *ownerFiles {
+		if len(file) > 0 {
+			if _, ok := fileMap[file]; !ok {
+				errors = append(errors, fmt.Errorf("file [%s] is not in sigs.yaml", file))
+			}
+		}
+	}
+
+	return errors
+}
+
+func validateOwnersFilesInGroups(groupMap *map[string][]utils.Group) (map[string]string, []error) {
+	fileMap := map[string]string{}
+	var errors []error
+	for groupType, groups := range *groupMap {
+		for _, group := range groups {
+			for _, sub := range group.Subprojects {
+				for _, filePath := range sub.Owners {
+					where := fmt.Sprintf("'%s/%s/%s'", groupType, group.Dir, sub.Name)
+					if val, ok := fileMap[filePath]; ok {
+						errors = append(errors, fmt.Errorf("%s is duplicated in %s and %s", filePath, val, where))
+					} else {
+						fileMap[filePath] = where
+					}
+				}
+			}
+		}
+	}
+	return fileMap, errors
 }
 
 func init() {
