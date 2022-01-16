@@ -157,16 +157,20 @@ func auditSubProject(group utils.Group, groupType string) {
 						if err != nil {
 							fmt.Printf("ERROR: unable to parse from owners file for subproject %s url [%s] %s\n", extra, url, err)
 						} else {
-							if len(group.Label) > 0 && len(info.Labels) > 0 {
-								found := false
-								for _, label := range info.Labels {
-									if strings.HasSuffix(label, group.Label) {
-										found = true
+							if len(info.Labels) > 0 {
+								if len(group.Label) > 0 {
+									found := false
+									for _, label := range info.Labels {
+										if strings.HasSuffix(label, group.Label) {
+											found = true
+										}
+									}
+									if !found {
+										fmt.Printf("WARNING %s does not have a label that ends with %s. Please ensure OWNERS file has labels reflecting %s\n",url, group.Label, group.Dir)
 									}
 								}
-								if !found {
-									fmt.Printf("WARNING %s does not have a label that ends with %s. Please ensure OWNERS file has labels reflecting %s\n",url, group.Label, group.Dir)
-								}
+							} else {
+								fmt.Printf("WARNING: file at %s url for %s does not have any labels. Please ensure OWNERS file has labels reflecting %s\n", url, extra, group.Dir)
 							}
 						}
 					} else {
