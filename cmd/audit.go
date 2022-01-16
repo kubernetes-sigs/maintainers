@@ -129,23 +129,23 @@ func auditGroup(pwd string, groupType string, group utils.Group, context *utils.
 
 func auditSubProject(group utils.Group, groupType string) {
 	for _, subproject := range group.Subprojects {
-		extra := fmt.Sprintf("[%s/%s]", subproject.Name, subproject.Description)
+		extra := fmt.Sprintf("[%s]", subproject.Name)
 		if len(subproject.Name) == 0 {
-			fmt.Printf("WARNING: missing name for subproject %v for a group under %s/%s\n", extra, groupType, group.Dir)
+			fmt.Printf("WARNING: missing name for subproject %s for a group under %s/%s\n", extra, groupType, group.Dir)
 		}
 		if len(subproject.Description) == 0 {
-			fmt.Printf("WARNING: missing description for subproject %v for a group under %s/%s\n", extra, groupType, group.Dir)
+			fmt.Printf("WARNING: missing description for subproject %s for a group under %s/%s\n", extra, groupType, group.Dir)
 		}
 		if subproject.Contact == nil {
-			fmt.Printf("WARNING: missing contact for subproject %v for a group under %s/%s\n", extra, groupType, group.Dir)
+			fmt.Printf("WARNING: missing contact for subproject %g for a group under %s/%s\n", extra, groupType, group.Dir)
 		} else {
 			auditContact(subproject.Contact, groupType, group)
 		}
 		if len(subproject.Owners) == 0 {
-			fmt.Printf("WARNING: missing owners for subproject %v for a group under %s/%s\n", extra, groupType, group.Dir)
+			fmt.Printf("WARNING: missing owners for subproject %s for a group under %s/%s\n", extra, groupType, group.Dir)
 		}
 		if len(subproject.Meetings) == 0 {
-			fmt.Printf("WARNING: missing meetings for subproject %v for a group under %s/%s\n", extra, groupType, group.Dir)
+			fmt.Printf("WARNING: missing meetings for subproject %s for a group under %s/%s\n", extra, groupType, group.Dir)
 		}
 	}
 }
@@ -228,12 +228,12 @@ func auditLeadership(group utils.Group, groupType string) {
 
 func auditPerson(group utils.Group, groupType string, extra string, person *utils.Person) {
 	if len(person.Name) == 0 {
-		fmt.Printf("WARNING: missing %s name for %v for %s/%s\n", extra, person, groupType, group.Dir)
+		fmt.Printf("WARNING: missing %s name for [%s] for %s/%s\n", extra, person.Name, groupType, group.Dir)
 	}
 	if len(person.GitHub) == 0 {
-		fmt.Printf("WARNING: missing %s github id for %v for %s/%s\n", extra, person, groupType, group.Dir)
+		fmt.Printf("WARNING: missing %s github id for [%s] for %s/%s\n", extra, person.Name, groupType, group.Dir)
 	}
 	if len(person.Company) == 0 {
-		fmt.Printf("WARNING: missing %s company for %v for %s/%s\n", extra, person, groupType, group.Dir)
+		fmt.Printf("WARNING: missing %s company for [%s] for %s/%s\n", extra, person.Name, groupType, group.Dir)
 	}
 }
