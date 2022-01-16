@@ -55,13 +55,21 @@ func GetSigsYaml(filename string) (*Context, error) {
 
 func GetOwnersInfo(file string) (*OwnersInfo, error) {
 	filename, _ := filepath.Abs(file)
-	yamlFile, err := ioutil.ReadFile(filename)
+	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
+	config, err := GetOwnersInfoFromBytes(bytes)
+	if err != nil {
+		return nil, err
+	}
+	return config, nil
+}
+
+func GetOwnersInfoFromBytes(bytes []byte) (*OwnersInfo, error) {
 	config := &OwnersInfo{}
-	err = yaml.UnmarshalStrict(yamlFile, &config)
+	err := yaml.UnmarshalStrict(bytes, &config)
 	if err != nil {
 		return nil, err
 	}

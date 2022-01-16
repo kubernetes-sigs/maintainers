@@ -19,6 +19,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -146,9 +147,18 @@ func auditSubProject(group utils.Group, groupType string) {
 		} else {
 			for _, url := range subproject.Owners {
 				if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
-					res, err := http.Head(url)
-					if err != nil || res.StatusCode != 200 {
-						fmt.Printf("WARNING: owners file for subproject %s  has a stale url [%s] http status code = %d %s\n", extra, url, res.StatusCode, err)
+					resp, err := http.Get(url)
+					if err == nil && resp.StatusCode == 200 {
+						bytes, err := ioutil.ReadAll(resp.Body)
+						if err != nil {
+							fmt.Printf("ERROR: unable to read from owners file for subproject %s url [%s] %s\n", extra, url, err)
+						}
+						_, err = utils.GetOwnersInfoFromBytes(bytes)
+						if err != nil {
+							fmt.Printf("ERROR: unable to parse from owners file for subproject %s url [%s] %s\n", extra, url, err)
+						}
+					} else {
+						fmt.Printf("WARNING: owners file for subproject %s  has a stale url [%s] http status code = %d %s\n", extra, url, resp.StatusCode, err)
 					}
 				} else {
 					fmt.Printf("WARNING: owners file for subproject %s should be a url instead of [%s]\n", extra, url)
