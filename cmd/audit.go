@@ -84,7 +84,7 @@ func auditGroup(pwd string, groupType string, group utils.Group, context *utils.
 		auditCharterLink(pwd, groupType, group)
 	}
 	if groupType == "workinggroups" {
-		auditWorkingGroup(group, groupType, context)
+		auditWorkingGroupStakeholders(group, groupType, context)
 	}
 	if len(group.Label) == 0 {
 		fmt.Printf("WARNING: missing 'label' for %s/%s\n", groupType, group.Dir)
@@ -93,18 +93,49 @@ func auditGroup(pwd string, groupType string, group utils.Group, context *utils.
 	if len(group.Meetings) == 0 {
 		fmt.Printf("WARNING: missing 'meetings' for %s/%s\n", groupType, group.Dir)
 	}
-	contact := group.Contact
+	auditContact(&group.Contact, groupType, group)
+	if len(group.Subprojects) == 0 {
+		fmt.Printf("WARNING: missing 'subprojects' for a group under %s/%s\n", groupType, group.Dir)
+	} else {
+		auditSubProject(group, groupType)
+	}
+}
+
+func auditSubProject(group utils.Group, groupType string) {
+	for _, subproject := range group.Subprojects {
+		extra := fmt.Sprintf("[%s/%s]", subproject.Name, subproject.Description)
+		if len(subproject.Name) == 0 {
+			fmt.Printf("WARNING: missing name for subproject %v for a group under %s/%s\n", extra, groupType, group.Dir)
+		}
+		if len(subproject.Description) == 0 {
+			fmt.Printf("WARNING: missing description for subproject %v for a group under %s/%s\n", extra, groupType, group.Dir)
+		}
+		if subproject.Contact == nil {
+			fmt.Printf("WARNING: missing contact for subproject %v for a group under %s/%s\n", extra, groupType, group.Dir)
+		} else {
+			auditContact(subproject.Contact, groupType, group)
+		}
+		if len(subproject.Owners) == 0 {
+			fmt.Printf("WARNING: missing owners for subproject %v for a group under %s/%s\n", extra, groupType, group.Dir)
+		}
+		if len(subproject.Meetings) == 0 {
+			fmt.Printf("WARNING: missing meetings for subproject %v for a group under %s/%s\n", extra, groupType, group.Dir)
+		}
+	}
+}
+
+func auditContact(contact *utils.Contact, groupType string, group utils.Group) {
 	if len(contact.Slack) == 0 {
-		fmt.Printf("WARNING: missing 'slack' for %s/%s under contact\n",groupType, group.Dir)
+		fmt.Printf("WARNING: missing 'slack' for %s/%s under contact\n", groupType, group.Dir)
 	}
 	if len(contact.MailingList) == 0 {
-		fmt.Printf("WARNING: missing 'mailing_list' for %s/%s under contact\n",groupType, group.Dir)
+		fmt.Printf("WARNING: missing 'mailing_list' for %s/%s under contact\n", groupType, group.Dir)
 	}
 	if len(contact.PrivateMailingList) == 0 {
-		fmt.Printf("WARNING: missing 'private_mailing_list' for %s/%s under contact\n",groupType, group.Dir)
+		fmt.Printf("WARNING: missing 'private_mailing_list' for %s/%s under contact\n", groupType, group.Dir)
 	}
 	if len(contact.GithubTeams) == 0 {
-		fmt.Printf("WARNING: missing 'teams' for %s/%s under contact\n",groupType, group.Dir)
+		fmt.Printf("WARNING: missing 'teams' for %s/%s under contact\n", groupType, group.Dir)
 	}
 	if contact.Liaison != nil {
 		auditPerson(group, groupType, "contact/liaison", contact.Liaison)
@@ -126,7 +157,7 @@ func auditCharterLink(pwd string, groupType string, group utils.Group) {
 	}
 }
 
-func auditWorkingGroup(group utils.Group, groupType string, context *utils.Context) {
+func auditWorkingGroupStakeholders(group utils.Group, groupType string, context *utils.Context) {
 	if len(group.StakeholderSIGs) == 0 {
 		fmt.Printf("WARNING: missing 'stakeholder_sigs' for %s/%s\n", groupType, group.Dir)
 	} else {
