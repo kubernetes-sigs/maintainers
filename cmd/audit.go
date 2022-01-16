@@ -166,6 +166,9 @@ func auditOwnersFiles(group utils.Group, subproject utils.Subproject, extra stri
 				if err != nil {
 					fmt.Printf("ERROR: unable to parse from owners file for subproject %s url [%s] %s\n", extra, url, err)
 				} else {
+					if !strings.Contains(url, "kubernetes/kubernetes") {
+						continue
+					}
 					if len(info.Labels) > 0 {
 						if len(group.Label) > 0 {
 							found := false
