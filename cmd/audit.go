@@ -153,9 +153,21 @@ func auditSubProject(group utils.Group, groupType string) {
 						if err != nil {
 							fmt.Printf("ERROR: unable to read from owners file for subproject %s url [%s] %s\n", extra, url, err)
 						}
-						_, err = utils.GetOwnersInfoFromBytes(bytes)
+						info, err := utils.GetOwnersInfoFromBytes(bytes)
 						if err != nil {
 							fmt.Printf("ERROR: unable to parse from owners file for subproject %s url [%s] %s\n", extra, url, err)
+						} else {
+							if len(group.Label) > 0 && len(info.Labels) > 0 {
+								found := false
+								for _, label := range info.Labels {
+									if strings.HasSuffix(label, group.Label) {
+										found = true
+									}
+								}
+								if !found {
+									fmt.Printf("WARNING %s does not have a label that ends with %s. Please ensure OWNERS file has labels reflecting %s\n",url, group.Label, group.Dir)
+								}
+							}
 						}
 					} else {
 						fmt.Printf("WARNING: owners file for subproject %s  has a stale url [%s] http status code = %d %s\n", extra, url, resp.StatusCode, err)
