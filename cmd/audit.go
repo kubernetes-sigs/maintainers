@@ -30,6 +30,17 @@ import (
 	"maintainers/pkg/utils"
 )
 
+var kubernetesDirectory string
+
+func init() {
+	val, ok := os.LookupEnv("GOPATH")
+	if ok {
+		kubernetesDirectory = path.Join(val, "src/k8s.io/kubernetes")
+	}
+	auditCmd.Flags().StringVar(&outputFile, "kubernetes-directory", kubernetesDirectory, "path to kubernetes directory")
+	rootCmd.AddCommand(auditCmd)
+}
+
 // auditCmd represents the audit command
 var auditCmd = &cobra.Command{
 	Use:   "audit [name|all]...",
@@ -41,6 +52,11 @@ var auditCmd = &cobra.Command{
 		pwd, err := os.Getwd()
 		if err != nil {
 			panic(err)
+		}
+
+		if _, err := os.Stat(kubernetesDirectory); errors.Is(err, os.ErrNotExist) {
+			fmt.Printf("please use --kubernetes-directory to set the path to the kubernetes directory. " +
+				"%s does not exist", kubernetesDirectory)
 		}
 
 		sigsYamlPath, err := utils.GetSigsYamlFile(pwd)
@@ -220,8 +236,4 @@ func auditPerson(group utils.Group, groupType string, extra string, person *util
 	if len(person.Company) == 0 {
 		fmt.Printf("WARNING: missing %s company for %v for %s/%s\n", extra, person, groupType, group.Dir)
 	}
-}
-
-func init() {
-	rootCmd.AddCommand(auditCmd)
 }
