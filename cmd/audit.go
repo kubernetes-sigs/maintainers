@@ -44,7 +44,7 @@ func init() {
 // auditCmd represents the audit command
 var auditCmd = &cobra.Command{
 	Use:   "audit [name|all]...",
-	Args: cobra.MinimumNArgs(1),
+	Args:  cobra.MinimumNArgs(1),
 	Short: "ensure OWNERS, OWNERS_ALIASES and sigs.yaml have the correct data structure",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -55,7 +55,7 @@ var auditCmd = &cobra.Command{
 		}
 
 		if _, err := os.Stat(kubernetesDirectory); errors.Is(err, os.ErrNotExist) {
-			fmt.Printf("please use --kubernetes-directory to set the path to the kubernetes directory. " +
+			fmt.Printf("please use --kubernetes-directory to set the path to the kubernetes directory. "+
 				"%s does not exist", kubernetesDirectory)
 		}
 
@@ -143,6 +143,17 @@ func auditSubProject(group utils.Group, groupType string) {
 		}
 		if len(subproject.Owners) == 0 {
 			fmt.Printf("WARNING: missing owners for subproject %s for a group under %s/%s\n", extra, groupType, group.Dir)
+		} else {
+			for _, url := range subproject.Owners {
+				if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
+					res, err := http.Head(url)
+					if err != nil || res.StatusCode != 200 {
+						fmt.Printf("WARNING: owners file for subproject %s  has a stale url [%s] http status code = %d %s\n", extra, url, res.StatusCode, err)
+					}
+				} else {
+					fmt.Printf("WARNING: owners file for subproject %s should be a url instead of [%s]\n", extra, url)
+				}
+			}
 		}
 		if len(subproject.Meetings) == 0 {
 			fmt.Printf("WARNING: missing meetings for subproject %s for a group under %s/%s\n", extra, groupType, group.Dir)
