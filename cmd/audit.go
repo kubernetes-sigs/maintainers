@@ -32,7 +32,8 @@ import (
 
 // auditCmd represents the audit command
 var auditCmd = &cobra.Command{
-	Use:   "audit",
+	Use:   "audit [name|all]...",
+	Args: cobra.MinimumNArgs(1),
 	Short: "ensure OWNERS, OWNERS_ALIASES and sigs.yaml have the correct data structure",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -58,9 +59,18 @@ var auditCmd = &cobra.Command{
 			"committees":    (*context).Committees,
 		}
 
-		for groupType, groups := range groupMap {
-			for _, group := range groups {
-				auditGroup(pwd, groupType, group, context)
+		for _, name := range args {
+			found := false
+			for groupType, groups := range groupMap {
+				for _, group := range groups {
+					if name == "all" || strings.Contains(group.Name, name) || strings.Contains(group.Dir, name) {
+						auditGroup(pwd, groupType, group, context)
+						found = true
+					}
+				}
+			}
+			if !found {
+				fmt.Printf("[%s] not found\n", name)
 			}
 		}
 		fmt.Printf("Done.\n")
