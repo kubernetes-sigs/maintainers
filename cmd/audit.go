@@ -169,21 +169,7 @@ func auditOwnersFiles(group utils.Group, subproject utils.Subproject, extra stri
 					if !strings.Contains(url, "kubernetes/kubernetes") {
 						continue
 					}
-					if len(info.Labels) > 0 {
-						if len(group.Label) > 0 {
-							found := false
-							for _, label := range info.Labels {
-								if strings.HasSuffix(label, group.Label) {
-									found = true
-								}
-							}
-							if !found {
-								fmt.Printf("WARNING %s does not have a label that ends with %s. Please ensure OWNERS file has labels reflecting %s\n", url, group.Label, group.Dir)
-							}
-						}
-					} else {
-						fmt.Printf("WARNING: file at %s url for %s does not have any labels. Please ensure OWNERS file has labels reflecting %s\n", url, extra, group.Dir)
-					}
+					auditOwnersInfo(group, info, url, extra)
 				}
 			} else {
 				fmt.Printf("WARNING: owners file for subproject %s  has a stale url [%s] http status code = %d %s\n", extra, url, resp.StatusCode, err)
@@ -191,6 +177,39 @@ func auditOwnersFiles(group utils.Group, subproject utils.Subproject, extra stri
 		} else {
 			fmt.Printf("WARNING: owners file for subproject %s should be a url instead of [%s]\n", extra, url)
 		}
+	}
+}
+
+func auditOwnersInfo(group utils.Group, info *utils.OwnersInfo, url string, extra string) {
+	if len(info.Labels) > 0 {
+		if len(group.Label) > 0 {
+			found := false
+			for _, label := range info.Labels {
+				if strings.HasSuffix(label, group.Label) {
+					found = true
+				}
+			}
+			if !found {
+				fmt.Printf("WARNING %s does not have a label that ends with %s. Please ensure OWNERS file has labels reflecting %s\n", url, group.Label, group.Dir)
+			}
+		}
+	} else {
+		fmt.Printf("WARNING: file at %s url for %s does not have any labels. Please ensure OWNERS file has labels reflecting %s\n", url, extra, group.Dir)
+	}
+	allOwners := []string{}
+	allOwners = append(allOwners, info.Approvers...)
+	allOwners = append(allOwners, info.Reviewers...)
+	allOwners = append(allOwners, info.RequiredReviewers...)
+	found := false
+	for _, item := range allOwners {
+		if strings.Contains(item, group.Label) {
+			found = true
+		}
+	}
+	if !found {
+		fmt.Printf("WARNING: file at %s url does not seem to have approvers/reviewers with the " +
+			"sig alias (defined in OWNER_ALIASES). Please consider adding a sig alias OWNER_ALIASES and " +
+			"add them to approvers/reviewers in this file.\n", url)
 	}
 }
 
