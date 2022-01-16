@@ -130,7 +130,7 @@ type Contact struct {
 	MailingList        string       `yaml:"mailing_list,omitempty" json:"mailing_list,omitempty"`
 	PrivateMailingList string       `yaml:"private_mailing_list,omitempty" json:"private_mailing_list,omitempty"`
 	GithubTeams        []GithubTeam `yaml:"teams,omitempty" json:"teams,omitempty"`
-	Liaison            Person       `yaml:"liaison,omitempty" json:"liaison,omitempty"`
+	Liaison            *Person      `yaml:"liaison,omitempty" json:"liaison,omitempty"`
 }
 
 // FoldedString is a string that will be serialized in FoldedStyle by go-yaml
