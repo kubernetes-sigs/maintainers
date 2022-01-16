@@ -145,44 +145,48 @@ func auditSubProject(group utils.Group, groupType string) {
 		if len(subproject.Owners) == 0 {
 			fmt.Printf("WARNING: missing owners for subproject %s for a group under %s/%s\n", extra, groupType, group.Dir)
 		} else {
-			for _, url := range subproject.Owners {
-				if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
-					resp, err := http.Get(url)
-					if err == nil && resp.StatusCode == 200 {
-						bytes, err := ioutil.ReadAll(resp.Body)
-						if err != nil {
-							fmt.Printf("ERROR: unable to read from owners file for subproject %s url [%s] %s\n", extra, url, err)
-						}
-						info, err := utils.GetOwnersInfoFromBytes(bytes)
-						if err != nil {
-							fmt.Printf("ERROR: unable to parse from owners file for subproject %s url [%s] %s\n", extra, url, err)
-						} else {
-							if len(info.Labels) > 0 {
-								if len(group.Label) > 0 {
-									found := false
-									for _, label := range info.Labels {
-										if strings.HasSuffix(label, group.Label) {
-											found = true
-										}
-									}
-									if !found {
-										fmt.Printf("WARNING %s does not have a label that ends with %s. Please ensure OWNERS file has labels reflecting %s\n",url, group.Label, group.Dir)
-									}
-								}
-							} else {
-								fmt.Printf("WARNING: file at %s url for %s does not have any labels. Please ensure OWNERS file has labels reflecting %s\n", url, extra, group.Dir)
-							}
-						}
-					} else {
-						fmt.Printf("WARNING: owners file for subproject %s  has a stale url [%s] http status code = %d %s\n", extra, url, resp.StatusCode, err)
-					}
-				} else {
-					fmt.Printf("WARNING: owners file for subproject %s should be a url instead of [%s]\n", extra, url)
-				}
-			}
+			auditOwnersFiles(group, subproject, extra)
 		}
 		if len(subproject.Meetings) == 0 {
 			fmt.Printf("WARNING: missing meetings for subproject %s for a group under %s/%s\n", extra, groupType, group.Dir)
+		}
+	}
+}
+
+func auditOwnersFiles(group utils.Group, subproject utils.Subproject, extra string) {
+	for _, url := range subproject.Owners {
+		if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
+			resp, err := http.Get(url)
+			if err == nil && resp.StatusCode == 200 {
+				bytes, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					fmt.Printf("ERROR: unable to read from owners file for subproject %s url [%s] %s\n", extra, url, err)
+				}
+				info, err := utils.GetOwnersInfoFromBytes(bytes)
+				if err != nil {
+					fmt.Printf("ERROR: unable to parse from owners file for subproject %s url [%s] %s\n", extra, url, err)
+				} else {
+					if len(info.Labels) > 0 {
+						if len(group.Label) > 0 {
+							found := false
+							for _, label := range info.Labels {
+								if strings.HasSuffix(label, group.Label) {
+									found = true
+								}
+							}
+							if !found {
+								fmt.Printf("WARNING %s does not have a label that ends with %s. Please ensure OWNERS file has labels reflecting %s\n", url, group.Label, group.Dir)
+							}
+						}
+					} else {
+						fmt.Printf("WARNING: file at %s url for %s does not have any labels. Please ensure OWNERS file has labels reflecting %s\n", url, extra, group.Dir)
+					}
+				}
+			} else {
+				fmt.Printf("WARNING: owners file for subproject %s  has a stale url [%s] http status code = %d %s\n", extra, url, resp.StatusCode, err)
+			}
+		} else {
+			fmt.Printf("WARNING: owners file for subproject %s should be a url instead of [%s]\n", extra, url)
 		}
 	}
 }
