@@ -138,7 +138,7 @@ func auditSubProject(group utils.Group, groupType string) {
 			fmt.Printf("WARNING: missing description for subproject %s for a group under %s/%s\n", extra, groupType, group.Dir)
 		}
 		if subproject.Contact == nil {
-			fmt.Printf("WARNING: missing contact for subproject %g for a group under %s/%s\n", extra, groupType, group.Dir)
+			fmt.Printf("WARNING: missing contact for subproject %s for a group under %s/%s\n", extra, groupType, group.Dir)
 		} else {
 			auditContact(subproject.Contact, groupType, group)
 		}
