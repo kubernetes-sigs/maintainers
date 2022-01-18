@@ -296,9 +296,9 @@ func auditPerson(extra string, person *utils.Person) {
 		fmt.Printf("WARNING: missing 'name' key in %s\n", extra)
 	}
 	if len(person.GitHub) == 0 {
-		fmt.Printf("WARNING: missing 'github' key in %s\n", extra)
+		fmt.Printf("WARNING: missing 'github' key in %s for %s\n", extra, person.Name)
 	}
 	if len(person.Company) == 0 {
-		fmt.Printf("OPTIONAL: missing 'company' key in %s\n", extra)
+		fmt.Printf("OPTIONAL: missing 'company' key in %s for %s\n", extra, person.Name)
 	}
 }
