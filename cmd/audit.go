@@ -57,7 +57,8 @@ var auditCmd = &cobra.Command{
 
 		if _, err := os.Stat(kubernetesDirectory); errors.Is(err, os.ErrNotExist) {
 			fmt.Printf("please use --kubernetes-directory to set the path to the kubernetes directory. "+
-				"%s does not exist", kubernetesDirectory)
+				"%s does not exist\n", kubernetesDirectory)
+			os.Exit(1)
 		}
 
 		sigsYamlPath, err := utils.GetSigsYamlFile(pwd)
