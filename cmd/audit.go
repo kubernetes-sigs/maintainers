@@ -23,7 +23,9 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -96,16 +98,27 @@ func auditGroup(pwd string, groupType string, group utils.Group, context *utils.
 		fmt.Printf("WARNING: missing 'name' key\n")
 	}
 	fmt.Printf("\n>>>> Processing %s [%s/%s]\n", groupType, group.Dir, group.Name)
-	if len(group.MissionStatement) == 0 {
-		fmt.Printf("WARNING: missing 'mission_statement' key\n")
+
+	expectedDir := group.DirName(groupType)
+	if expectedDir != group.Dir {
+		fmt.Printf("ERROR: expected dir: %s, got: %s\n", expectedDir, group.Dir)
 	}
-	if len(group.CharterLink) == 0 {
-		fmt.Printf("WARNING: missing 'charter_link' key\n")
-	} else {
-		auditCharterLink(pwd, group)
+	expectedLabel := group.LabelName(groupType)
+	if expectedLabel != group.Label {
+		fmt.Printf("ERROR: expected label: %s, got: %s\n", expectedLabel, group.Label)
+	}
+	if groupType == "sig" {
+		if len(group.MissionStatement) == 0 {
+			fmt.Printf("ERROR: missing 'mission_statement' key\n")
+		}
+		if len(group.CharterLink) == 0 {
+			fmt.Printf("ERROR: missing 'charter_link' key\n")
+		} else {
+			auditCharterLink(pwd, group)
+		}
 	}
 	if groupType == "wg" {
-		auditWorkingGroupStakeholders(group, context)
+		auditWorkingGroupStakeholders(groupType, group, context)
 	}
 	if len(group.Label) == 0 {
 		fmt.Printf("WARNING: missing 'label' keys\n")
@@ -115,10 +128,17 @@ func auditGroup(pwd string, groupType string, group utils.Group, context *utils.
 		fmt.Printf("WARNING: missing 'meetings' key\n")
 	}
 	auditContact(&group.Contact)
-	if len(group.Subprojects) == 0 {
-		fmt.Printf("WARNING: missing 'subprojects' key\n")
-	} else {
-		auditSubProject(group)
+	if groupType == "sig" {
+		if len(group.Subprojects) == 0 {
+			fmt.Printf("WARNING: missing 'subprojects' key\n")
+		} else {
+			auditSubProject(group)
+		}
+	}
+	if groupType != "committee" && groupType != "sig" {
+		if len(group.Subprojects) > 0 {
+			fmt.Printf("ERROR: only sigs and committees can own code / have subprojects, found: %d subprojects\n", len(group.Subprojects))
+		}
 	}
 }
 
@@ -137,7 +157,7 @@ func auditSubProject(group utils.Group) {
 			auditContact(subproject.Contact)
 		}
 		if len(subproject.Owners) == 0 {
-			fmt.Printf("WARNING: missing 'owners' key\n")
+			fmt.Printf("ERROR: missing 'owners' key\n")
 		} else {
 			auditOwnersFiles(group, subproject)
 		}
@@ -147,30 +167,45 @@ func auditSubProject(group utils.Group) {
 	}
 }
 
+const (
+	regexRawGitHubURL = "https://raw.githubusercontent.com/(?P<org>[^/]+)/(?P<repo>[^/]+)/(?P<branch>[^/]+)/(?P<path>.*)"
+	regexGitHubURL    = "https://github.com/(?P<org>[^/]+)/(?P<repo>[^/]+)/(blob|tree)/(?P<branch>[^/]+)/(?P<path>.*)"
+)
+
+var reRawGitHubURL, reGitHubURL *regexp.Regexp
+var regexpOnce sync.Once
+
 func auditOwnersFiles(group utils.Group, subproject utils.Subproject) {
+	regexpOnce.Do(func() {
+		reRawGitHubURL = regexp.MustCompile(regexRawGitHubURL)
+		reGitHubURL = regexp.MustCompile(regexGitHubURL)
+	})
 	fmt.Printf("\n>>>> Processing owners files for %s/%s\n", group.Dir, subproject.Name)
+	if len(subproject.Owners) == 0 {
+		fmt.Printf("ERROR: subproject %s has no owners\n", subproject.Name)
+	}
 	for _, url := range subproject.Owners {
-		if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
-			resp, err := http.Get(url)
-			if err == nil && resp.StatusCode == 200 {
-				bytes, err := ioutil.ReadAll(resp.Body)
-				if err != nil {
-					fmt.Printf("ERROR: unable to read owners file at %s url - %v\n", url, err)
-				}
-				info, err := utils.GetOwnersInfoFromBytes(bytes)
-				if err != nil {
-					fmt.Printf("ERROR: unable to parse owners file at %s url - %v\n", url, err)
-				} else {
-					if !strings.Contains(url, "kubernetes/kubernetes") {
-						continue
-					}
-					auditOwnersInfo(group, info, url)
-				}
+		if !reRawGitHubURL.MatchString(url) && !reGitHubURL.MatchString(url) {
+			fmt.Printf("ERROR: owner urls should match regexp %s, found: %s\n", regexRawGitHubURL, url)
+			continue
+		}
+		resp, err := http.Get(url)
+		if err == nil && resp.StatusCode == 200 {
+			bytes, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				fmt.Printf("ERROR: unable to read owners file at %s url - %v\n", url, err)
+			}
+			info, err := utils.GetOwnersInfoFromBytes(bytes)
+			if err != nil {
+				fmt.Printf("ERROR: unable to parse owners file at %s url - %v\n", url, err)
 			} else {
-				fmt.Printf("WARNING: stale url %s - http status code = %d - %s\n", url, resp.StatusCode, err)
+				if !strings.Contains(url, "kubernetes/kubernetes") {
+					continue
+				}
+				auditOwnersInfo(group, info, url)
 			}
 		} else {
-			fmt.Printf("WARNING: owners file should be a url, found [%s]\n", url)
+			fmt.Printf("WARNING: stale url %s - http status code = %d - %s\n", url, resp.StatusCode, err)
 		}
 	}
 }
@@ -241,21 +276,27 @@ func auditCharterLink(pwd string, group utils.Group) {
 	}
 }
 
-func auditWorkingGroupStakeholders(group utils.Group, context *utils.Context) {
-	if len(group.StakeholderSIGs) == 0 {
-		fmt.Printf("WARNING: missing 'stakeholder_sigs' key\n")
-	} else {
-		for _, stakeholder := range group.StakeholderSIGs {
-			found := false
-			for _, group := range context.Sigs {
-				if group.Name == stakeholder {
-					found = true
-					break
+func auditWorkingGroupStakeholders(groupType string, group utils.Group, context *utils.Context) {
+	if groupType == "wg" {
+		if len(group.StakeholderSIGs) == 0 {
+			fmt.Printf("WARNING: missing 'stakeholder_sigs' key\n")
+		} else {
+			for _, stakeholder := range group.StakeholderSIGs {
+				found := false
+				for _, group := range context.Sigs {
+					if group.Name == stakeholder {
+						found = true
+						break
+					}
+				}
+				if !found {
+					fmt.Printf("WARNING: stakeholder_sigs entry '%s' not found (typo?)\n", stakeholder)
 				}
 			}
-			if !found {
-				fmt.Printf("WARNING: stakeholder_sigs entry '%s' not found (typo?)\n", stakeholder)
-			}
+		}
+	} else {
+		if len(group.StakeholderSIGs) > 0 {
+			fmt.Printf("ERROR: only 'workinggroups' may have stakeholder_sigs ()\n")
 		}
 	}
 }
