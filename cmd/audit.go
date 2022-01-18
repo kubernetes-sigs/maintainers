@@ -65,29 +65,59 @@ var auditCmd = &cobra.Command{
 
 		sigsYamlPath, err := utils.GetSigsYamlFile(pwd)
 		if err != nil {
-			panic(fmt.Errorf("unable to find sigs.yaml file: %w", err))
+			panic(fmt.Errorf("ERROR: unable to find sigs.yaml file: %w", err))
 		}
 		context, err := utils.GetSigsYaml(sigsYamlPath)
 		if err != nil {
-			panic(fmt.Errorf("error parsing file: %s - %w", sigsYamlPath, err))
+			panic(fmt.Errorf("ERROR: parsing file: %s - %w", sigsYamlPath, err))
 		}
 
-		for _, name := range args {
-			found := false
-			for groupType, groups := range context.PrefixToGroupMap() {
-				for _, group := range groups {
-					if name == "all" || strings.Contains(group.Name, name) || strings.Contains(group.Dir, name) {
-						auditGroup(pwd, groupType, group, context)
-						found = true
+		auditSpecifiedGroups(pwd, context, args)
+		auditGithubIDs(context)
+		fmt.Printf("Done.\n")
+	},
+}
+
+func auditGithubIDs(context *utils.Context) {
+	fmt.Printf("\n>>>> Processing github id(s)\n")
+	people := make(map[string]utils.Person)
+	for groupType, groups := range context.PrefixToGroupMap() {
+		for _, group := range groups {
+			for prefix, persons := range group.Leadership.PrefixToPersonMap() {
+				for _, person := range persons {
+					if val, ok := people[person.GitHub]; ok {
+						if val.Name != person.Name || (prefix != "emeritus_lead" && val.Company != person.Company) {
+							fmt.Printf("ERROR: %s/%s: %s: expected person: %v, got: %v\n", groupType, group.Dir, prefix, val, person)
+						}
+					} else if prefix != "emeritus_lead" {
+						people[person.GitHub] = person
+					}
+
+					if prefix == "emeritus_lead" && person.Company != "" {
+						fmt.Printf("ERROR: %s/%s: emeritus leads should not have company specified; company specified for: %s\n", groupType, group.Dir, person.Name)
 					}
 				}
 			}
-			if !found {
-				fmt.Printf("[%s] not found\n", name)
+		}
+	}
+	// TODO: grab contribution stats to see who is active?
+}
+
+func auditSpecifiedGroups(pwd string, context *utils.Context, args []string) {
+	for _, name := range args {
+		found := false
+		for groupType, groups := range context.PrefixToGroupMap() {
+			for _, group := range groups {
+				if name == "all" || strings.Contains(group.Name, name) || strings.Contains(group.Dir, name) {
+					auditGroup(pwd, groupType, group, context)
+					found = true
+				}
 			}
 		}
-		fmt.Printf("Done.\n")
-	},
+		if !found {
+			fmt.Printf("[%s] not found\n", name)
+		}
+	}
 }
 
 func auditGroup(pwd string, groupType string, group utils.Group, context *utils.Context) {
