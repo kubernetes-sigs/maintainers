@@ -68,13 +68,7 @@ var validateCmd = &cobra.Command{
 			}
 		}
 
-		groupMap := map[string][]utils.Group{
-			"sigs":          (*context).Sigs,
-			"usergroups":    (*context).UserGroups,
-			"workinggroups": (*context).WorkingGroups,
-			"committees":    (*context).Committees,
-		}
-
+		groupMap := context.PrefixToGroupMap()
 		fileMap, errors := validateOwnersFilesInGroups(&groupMap)
 		errors2 := warnFileMismatchesBetweenKubernetesRepoAndSigsYaml(fileMap)
 		errors = append(errors, errors2...)

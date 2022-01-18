@@ -16,7 +16,12 @@ limitations under the License.
 
 package utils
 
-import "gopkg.in/yaml.v3"
+import (
+	"fmt"
+	"strings"
+
+	"gopkg.in/yaml.v3"
+)
 
 type OwnersInfo struct {
 	Filters           map[string]FiltersInfo `json:"filters,omitempty"`
@@ -83,6 +88,38 @@ type Group struct {
 	Subprojects      []Subproject `yaml:",omitempty" json:",omitempty"`
 }
 
+
+// PrefixToGroupMap returns a map of prefix to groups, useful for iteration over all groups
+func (c *Context) PrefixToGroupMap() map[string][]Group {
+	return map[string][]Group{
+		"sig":       c.Sigs,
+		"wg":        c.WorkingGroups,
+		"ug":        c.UserGroups,
+		"committee": c.Committees,
+	}
+}
+
+// DirName returns the directory that a group's documentation will be
+// generated into. It is composed of a prefix (sig for SIGs and wg for WGs),
+// and a formatted version of the group's name (in kebab case).
+func (g *Group) DirName(prefix string) string {
+	return fmt.Sprintf("%s-%s", prefix, strings.ToLower(strings.Replace(g.Name, " ", "-", -1)))
+}
+
+// LabelName returns the expected label for a given group
+func (g *Group) LabelName(prefix string) string {
+	return strings.Replace(g.DirName(prefix), fmt.Sprintf("%s-", prefix), "", 1)
+}
+
+func GroupIndex(groups []Group, predicate func(Group) bool) int {
+	for i, group := range groups {
+		if predicate(group) {
+			return i
+		}
+	}
+	return -1
+}
+
 // GithubTeam represents a specific Github Team.
 type GithubTeam struct {
 	Name        string
@@ -103,6 +140,15 @@ type LeadershipGroup struct {
 	Chairs         []Person
 	TechnicalLeads []Person `yaml:"tech_leads,omitempty" json:"tech_leads,omitempty"`
 	EmeritusLeads  []Person `yaml:"emeritus_leads,omitempty" json:"emeritus_leads,omitempty"`
+}
+
+// PrefixToPersonMap returns a map of prefix to persons, useful for iteration over all persons
+func (g *LeadershipGroup) PrefixToPersonMap() map[string][]Person {
+	return map[string][]Person{
+		"chair":         g.Chairs,
+		"tech_lead":     g.TechnicalLeads,
+		"emeritus_lead": g.EmeritusLeads,
+	}
 }
 
 // Person represents an individual person holding a role in a group.

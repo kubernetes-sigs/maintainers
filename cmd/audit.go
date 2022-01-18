@@ -70,16 +70,9 @@ var auditCmd = &cobra.Command{
 			panic(fmt.Errorf("error parsing file: %s - %w", sigsYamlPath, err))
 		}
 
-		groupMap := map[string][]utils.Group{
-			"sigs":          (*context).Sigs,
-			"usergroups":    (*context).UserGroups,
-			"workinggroups": (*context).WorkingGroups,
-			"committees":    (*context).Committees,
-		}
-
 		for _, name := range args {
 			found := false
-			for groupType, groups := range groupMap {
+			for groupType, groups := range context.PrefixToGroupMap() {
 				for _, group := range groups {
 					if name == "all" || strings.Contains(group.Name, name) || strings.Contains(group.Dir, name) {
 						auditGroup(pwd, groupType, group, context)
@@ -111,8 +104,8 @@ func auditGroup(pwd string, groupType string, group utils.Group, context *utils.
 	} else {
 		auditCharterLink(pwd, group)
 	}
-	if groupType == "workinggroups" {
-		auditWorkingGroupStakeholders(group, groupType, context)
+	if groupType == "wg" {
+		auditWorkingGroupStakeholders(group, context)
 	}
 	if len(group.Label) == 0 {
 		fmt.Printf("WARNING: missing 'label' keys\n")
@@ -125,11 +118,11 @@ func auditGroup(pwd string, groupType string, group utils.Group, context *utils.
 	if len(group.Subprojects) == 0 {
 		fmt.Printf("WARNING: missing 'subprojects' key\n")
 	} else {
-		auditSubProject(group, groupType)
+		auditSubProject(group)
 	}
 }
 
-func auditSubProject(group utils.Group, groupType string) {
+func auditSubProject(group utils.Group) {
 	for _, subproject := range group.Subprojects {
 		fmt.Printf("\n>>>> Processing subproject %s under %s\n", subproject.Name, group.Dir)
 		if len(subproject.Name) == 0 {
@@ -248,7 +241,7 @@ func auditCharterLink(pwd string, group utils.Group) {
 	}
 }
 
-func auditWorkingGroupStakeholders(group utils.Group, groupType string, context *utils.Context) {
+func auditWorkingGroupStakeholders(group utils.Group, context *utils.Context) {
 	if len(group.StakeholderSIGs) == 0 {
 		fmt.Printf("WARNING: missing 'stakeholder_sigs' key\n")
 	} else {
@@ -270,7 +263,7 @@ func auditWorkingGroupStakeholders(group utils.Group, groupType string, context 
 func auditLeadership(group utils.Group, groupType string) {
 	if len(group.Leadership.Chairs) == 0 {
 		fmt.Printf("WARNING: missing 'chairs' key (in 'leadership' section)\n")
-		if groupType == "sigs" {
+		if groupType == "sig" {
 			if len(group.Leadership.Chairs) == 1 {
 				fmt.Printf("WARNING: please consider adding more folks in as 'chairs' (in 'leadership' section)\n")
 			}
@@ -278,7 +271,7 @@ func auditLeadership(group utils.Group, groupType string) {
 	}
 	if len(group.Leadership.TechnicalLeads) == 0 {
 		fmt.Printf("WARNING: missing 'tech_leads' key (in 'leadership' section)\n")
-		if groupType == "sigs" {
+		if groupType == "sig" {
 			fmt.Printf("WARNING: if chairs are serving as tech leads, please add them explicitly in 'tech_leads' key (in 'leadership' section)\n")
 		}
 	}
