@@ -162,7 +162,7 @@ func auditGroup(pwd string, groupType string, group utils.Group, context *utils.
 		if len(group.Subprojects) == 0 {
 			fmt.Printf("WARNING: missing 'subprojects' key\n")
 		} else {
-			auditSubProject(group)
+			auditSubProject(groupType, group)
 		}
 	}
 	if groupType != "committee" && groupType != "sig" {
@@ -172,7 +172,7 @@ func auditGroup(pwd string, groupType string, group utils.Group, context *utils.
 	}
 }
 
-func auditSubProject(group utils.Group) {
+func auditSubProject(groupType string, group utils.Group) {
 	for _, subproject := range group.Subprojects {
 		fmt.Printf("\n>>>> Processing subproject %s under %s\n", subproject.Name, group.Dir)
 		if len(subproject.Name) == 0 {
@@ -189,7 +189,7 @@ func auditSubProject(group utils.Group) {
 		if len(subproject.Owners) == 0 {
 			fmt.Printf("ERROR: missing 'owners' key\n")
 		} else {
-			auditOwnersFiles(group, subproject)
+			auditOwnersFiles(groupType, group, subproject)
 		}
 		if len(subproject.Meetings) == 0 {
 			fmt.Printf("WARNING: missing 'meetings' key\n")
@@ -205,7 +205,7 @@ const (
 var reRawGitHubURL, reGitHubURL *regexp.Regexp
 var regexpOnce sync.Once
 
-func auditOwnersFiles(group utils.Group, subproject utils.Subproject) {
+func auditOwnersFiles(groupType string, group utils.Group, subproject utils.Subproject) {
 	regexpOnce.Do(func() {
 		reRawGitHubURL = regexp.MustCompile(regexRawGitHubURL)
 		reGitHubURL = regexp.MustCompile(regexGitHubURL)
@@ -232,15 +232,17 @@ func auditOwnersFiles(group utils.Group, subproject utils.Subproject) {
 				if !strings.Contains(url, "kubernetes/kubernetes") {
 					continue
 				}
-				auditOwnersInfo(group, info, url)
+				auditOwnersInfo(groupType, group, info, url)
 			}
 		} else {
-			fmt.Printf("WARNING: stale url %s - http status code = %d - %s\n", url, resp.StatusCode, err)
+			fmt.Printf("WARNING: stale url in %s - %s - http status code = %d - %s\n",
+				group.DirName(groupType), url, resp.StatusCode, err)
 		}
 	}
 }
 
-func auditOwnersInfo(group utils.Group, info *utils.OwnersInfo, url string) {
+func auditOwnersInfo(groupType string, group utils.Group, info *utils.OwnersInfo, url string) {
+	lookFor := group.DirName(groupType)
 	if len(info.Labels) > 0 {
 		if len(group.Label) > 0 {
 			found := false
@@ -250,11 +252,11 @@ func auditOwnersInfo(group utils.Group, info *utils.OwnersInfo, url string) {
 				}
 			}
 			if !found {
-				fmt.Printf("WARNING: file does not have a label that contains with %s. Please ensure OWNERS file has labels reflecting %s - %s\n", group.Label, group.Dir, url)
+				fmt.Printf("WARNING: needs labels reflecting %s - %s\n", lookFor, url)
 			}
 		}
 	} else {
-		fmt.Printf("WARNING: file at url does not have any labels. Please ensure OWNERS file has labels reflecting %s - %s\n", group.Dir, url)
+		fmt.Printf("WARNING: needs labels reflecting %s - %s\n", lookFor, url)
 	}
 	allOwners := []string{}
 	allOwners = append(allOwners, info.Approvers...)
@@ -262,14 +264,12 @@ func auditOwnersInfo(group utils.Group, info *utils.OwnersInfo, url string) {
 	allOwners = append(allOwners, info.RequiredReviewers...)
 	found := false
 	for _, item := range allOwners {
-		if strings.Contains(item, group.Label) {
+		if strings.Contains(item, lookFor) {
 			found = true
 		}
 	}
 	if !found {
-		fmt.Printf("WARNING: file at url does not seem to have approvers/reviewers with the "+
-			"sig alias (defined in OWNER_ALIASES). Please consider adding a sig alias OWNER_ALIASES and "+
-			"add them to approvers/reviewers in this file - %s\n", url)
+		fmt.Printf("WARNING: needs an alias as approver/reviewer reflecting %s - %s\n", lookFor, url)
 	}
 }
 
