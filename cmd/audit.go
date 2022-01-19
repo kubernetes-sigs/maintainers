@@ -75,9 +75,10 @@ var auditCmd = &cobra.Command{
 			panic(fmt.Errorf("ERROR: parsing file: %s - %w", sigsYamlPath, err))
 		}
 
-		auditSpecifiedGroups(pwd, context, args)
-		auditGithubIDs(context)
-		auditLocalOwnersFiles(context)
+		if auditSpecifiedGroups(pwd, context, args) {
+			auditGithubIDs(context)
+			auditLocalOwnersFiles(context)
+		}
 		fmt.Printf("Done.\n")
 	},
 }
@@ -190,9 +191,9 @@ func auditGithubIDs(context *utils.Context) {
 	// TODO: grab contribution stats to see who is active?
 }
 
-func auditSpecifiedGroups(pwd string, context *utils.Context, args []string) {
+func auditSpecifiedGroups(pwd string, context *utils.Context, args []string) bool {
+	found := false
 	for _, name := range args {
-		found := false
 		for groupType, groups := range context.PrefixToGroupMap() {
 			for _, group := range groups {
 				if name == "all" || strings.Contains(group.Name, name) || strings.Contains(group.Dir, name) {
@@ -205,6 +206,7 @@ func auditSpecifiedGroups(pwd string, context *utils.Context, args []string) {
 			fmt.Printf("[%s] not found\n", name)
 		}
 	}
+	return found
 }
 
 func auditGroup(pwd string, groupType string, group utils.Group, context *utils.Context) {
