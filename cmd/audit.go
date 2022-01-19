@@ -114,6 +114,7 @@ func auditLocalOwnersFiles(context *utils.Context) {
 		fmt.Printf("ERROR: unable to find kubernetes directory - %s\n", err)
 		return
 	}
+	infoLog := sets.String{}
 	for _, file := range files {
 		likelyGroups := sets.String{}
 		info, err := utils.GetOwnersInfo(file)
@@ -146,17 +147,21 @@ func auditLocalOwnersFiles(context *utils.Context) {
 			actualGroups := val.List()
 			if len(candidates) != 0 {
 				if !reflect.DeepEqual(actualGroups, candidates) {
-					fmt.Printf("ERROR: file %s should be in %q based on labels/aliases but is in %q\n",
-						subpath, candidates, actualGroups)
+					infoLog.Insert(fmt.Sprintf("ERROR: file %s should be in %q based on labels/aliases but is in %q\n",
+						subpath, candidates, actualGroups))
 				}
 			}
 		} else {
 			if len(candidates) > 0 {
-				fmt.Printf("WARNING: file %s should be in one of %q based on labels/aliases\n", subpath, candidates)
+				infoLog.Insert(fmt.Sprintf("WARNING: file %s should be in one of %q based on labels/aliases\n",
+					subpath, candidates))
 			} else {
-				//fmt.Printf("@@@@ unable to find which group %s belongs\n", subpath)
+				infoLog.Insert(fmt.Sprintf("INFO: unable to classify %s\n", subpath))
 			}
 		}
+	}
+	for _, line := range infoLog.List() {
+		fmt.Printf(line)
 	}
 }
 
