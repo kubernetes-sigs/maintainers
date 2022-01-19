@@ -77,13 +77,13 @@ var auditCmd = &cobra.Command{
 
 		if auditSpecifiedGroups(pwd, context, args) {
 			auditGithubIDs(context)
-			auditLocalOwnersFiles(context)
+			auditLocalOwnersFiles(context, args)
 		}
 		fmt.Printf("Done.\n")
 	},
 }
 
-func auditLocalOwnersFiles(context *utils.Context) {
+func auditLocalOwnersFiles(context *utils.Context, args []string) {
 	fmt.Printf("\n>>>> Processing owners files\n")
 	mapFilesToGroups := make(map[string]sets.String)
 	var listOfGroups []string
@@ -148,14 +148,18 @@ func auditLocalOwnersFiles(context *utils.Context) {
 			actualGroups := val.List()
 			if len(candidates) != 0 {
 				if !reflect.DeepEqual(actualGroups, candidates) {
-					infoLog.Insert(fmt.Sprintf("ERROR: file %s should be in %q based on labels/aliases but is in %q\n",
-						subpath, candidates, actualGroups))
+					if groupNameInArgs(candidates, args) || groupNameInArgs(actualGroups, args) {
+						infoLog.Insert(fmt.Sprintf("ERROR: file %s should be in %q based on labels/aliases but is in %q\n",
+							subpath, candidates, actualGroups))
+					}
 				}
 			}
 		} else {
 			if len(candidates) > 0 {
-				infoLog.Insert(fmt.Sprintf("WARNING: file %s should be in one of %q based on labels/aliases\n",
-					subpath, candidates))
+				if groupNameInArgs(candidates, args) {
+					infoLog.Insert(fmt.Sprintf("WARNING: file %s should be in one of %q based on labels/aliases\n",
+						subpath, candidates))
+				}
 			} else {
 				infoLog.Insert(fmt.Sprintf("INFO: unable to classify %s\n", subpath))
 			}
@@ -164,6 +168,17 @@ func auditLocalOwnersFiles(context *utils.Context) {
 	for _, line := range infoLog.List() {
 		fmt.Printf(line)
 	}
+}
+
+func groupNameInArgs(groupNames []string, args []string) bool {
+	for _, groupName := range groupNames {
+		for _, name := range args {
+			if name == "all" || groupName == name || strings.Contains(groupName, name) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func auditGithubIDs(context *utils.Context) {
