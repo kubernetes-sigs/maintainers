@@ -23,12 +23,15 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"maintainers/pkg/utils"
 )
@@ -74,8 +77,87 @@ var auditCmd = &cobra.Command{
 
 		auditSpecifiedGroups(pwd, context, args)
 		auditGithubIDs(context)
+		auditLocalOwnersFiles(context)
 		fmt.Printf("Done.\n")
 	},
+}
+
+func auditLocalOwnersFiles(context *utils.Context) {
+	fmt.Printf("\n>>>> Processing owners files\n")
+	mapFilesToGroups := make(map[string]sets.String)
+	var listOfGroups []string
+	for _, groups := range context.PrefixToGroupMap() {
+		for _, group := range groups {
+			listOfGroups = append(listOfGroups, group.Dir)
+			var files []string
+			for _, subproject := range group.Subprojects {
+				for _, owner := range subproject.Owners {
+					if strings.Contains(owner, "/kubernetes/kubernetes/") {
+						split := strings.SplitN(owner, "/", 7)
+						filename := split[len(split)-1]
+						files = append(files, filename)
+						if val, ok := mapFilesToGroups[filename]; ok {
+							val.Insert(group.Dir)
+						} else {
+							val := sets.String{}
+							val.Insert(group.Dir)
+							mapFilesToGroups[filename] = val
+						}
+					}
+				}
+			}
+		}
+	}
+	sort.Strings(listOfGroups)
+	files, err := utils.GetOwnerFiles(kubernetesDirectory)
+	if err != nil {
+		fmt.Printf("ERROR: unable to find kubernetes directory - %s\n", err)
+		return
+	}
+	for _, file := range files {
+		likelyGroups := sets.String{}
+		info, err := utils.GetOwnersInfo(file)
+		if err != nil {
+			fmt.Printf("ERROR: unable to read file %s - %s\n", file, err)
+			continue
+		}
+		for _, label := range info.Labels {
+			label = strings.ReplaceAll(label, "/", "-")
+			for _, g := range listOfGroups {
+				if strings.HasPrefix(label, g) {
+					likelyGroups.Insert(g)
+				}
+			}
+		}
+		allOwners := []string{}
+		allOwners = append(allOwners, info.Approvers...)
+		allOwners = append(allOwners, info.Reviewers...)
+		allOwners = append(allOwners, info.RequiredReviewers...)
+		for _, item := range allOwners {
+			for _, g := range listOfGroups {
+				if strings.HasPrefix(item, g) {
+					likelyGroups.Insert(g)
+				}
+			}
+		}
+		subpath := strings.Replace(file, kubernetesDirectory, "", -1)[1:]
+		candidates := likelyGroups.List()
+		if val, ok := mapFilesToGroups[subpath]; ok {
+			actualGroups := val.List()
+			if len(candidates) != 0 {
+				if !reflect.DeepEqual(actualGroups, candidates) {
+					fmt.Printf("ERROR: file %s should be in %q based on labels/aliases but is in %q\n",
+						subpath, candidates, actualGroups)
+				}
+			}
+		} else {
+			if len(candidates) > 0 {
+				fmt.Printf("WARNING: file %s should be in one of %q based on labels/aliases\n", subpath, candidates)
+			} else {
+				//fmt.Printf("@@@@ unable to find which group %s belongs\n", subpath)
+			}
+		}
+	}
 }
 
 func auditGithubIDs(context *utils.Context) {
