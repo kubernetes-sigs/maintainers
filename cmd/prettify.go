@@ -26,7 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"maintainers/pkg/utils"
+	"github.com/dims/maintainers/pkg/utils"
 )
 
 var indent int

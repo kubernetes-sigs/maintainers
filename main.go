@@ -16,7 +16,7 @@ limitations under the License.
 
 package main
 
-import "maintainers/cmd"
+import "github.com/dims/maintainers/cmd"
 
 func main() {
 	cmd.Execute()

@@ -33,7 +33,7 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"maintainers/pkg/utils"
+	"github.com/dims/maintainers/pkg/utils"
 )
 
 var kubernetesDirectory string
