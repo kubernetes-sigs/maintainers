@@ -1,0 +1,47 @@
+name: Go
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: "0, 10,18,22 * * *"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - name: Set env
+        shell: bash
+        run: |
+          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
+          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
+
+      - uses: actions/checkout@v2
+        with:
+          path: ${{ github.workspace }}/src/github.com/dims/maintainers/
+
+      - name: Build
+        run: go install .
+        working-directory: ${{ github.workspace }}/src/github.com/dims/maintainers/
+
+      - name: Checkout kubernetes/community
+        uses: actions/checkout@v2
+        with:
+          path: ${{ github.workspace }}/src/k8s.io/community/
+          repository: kubernetes/community
+
+      - name: Checkout kubernetes/kubernetes
+        uses: actions/checkout@v2
+        with:
+          path: ${{ github.workspace }}/src/k8s.io/kubernetes/
+          repository: kubernetes/kubernetes
+
+      - name: audit all
+        run: maintainers audit all
+        working-directory: ${{ github.workspace }}/src/k8s.io/community/
