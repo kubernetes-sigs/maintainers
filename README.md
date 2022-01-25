@@ -1,3 +1,5 @@
+# Maintainers
+
 Parse OWNERS, OWNER_ALIASES in kubernetes/kubernetes then pull information from devstats:
 https://k8s.devstats.cncf.io/d/13/developer-activity-counts-by-repository-group?orgId=1&var-period_name=Last%20year&var-metric=contributions&var-repogroup_name=All&var-repo_name=kubernetes%2Fkubernetes&var-country_name=All
 
@@ -24,7 +26,7 @@ Flags:
 
 Notes:
 - Use `--dryrun=true` to update all the files
-- You can specify the repositories from where to fetch the contribution or PR 
+- You can specify the repositories from where to fetch the contribution or PR
   comments using `--repository-devstats` or `--repository-github`
 - If you want to skip either the devstats check or the github check use the corresponding flag, either
   `--skip-devstats` or `--skip-github`
@@ -92,3 +94,19 @@ Flags:
   -h, --help                          help for audit
       --kubernetes-directory string   path to kubernetes directory (default "/Users/dims/go/src/k8s.io/kubernetes")
 ```
+
+## Community, discussion, contribution, and support
+
+Learn how to engage with the Kubernetes community on the [community page](http://kubernetes.io/community/).
+
+You can reach the maintainers of this project at:
+
+- [Slack](http://slack.k8s.io/)
+- [Mailing List](https://groups.google.com/forum/#!forum/kubernetes-dev)
+
+### Code of conduct
+
+Participation in the Kubernetes community is governed by the [Kubernetes Code of Conduct](code-of-conduct.md).
+
+[owners]: https://git.k8s.io/community/contributors/guide/owners.md
+[Creative Commons 4.0]: https://git.k8s.io/website/LICENSE
