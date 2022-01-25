@@ -38,12 +38,18 @@ import (
 
 var kubernetesDirectory string
 
-func init() {
+func getDefaultKubernetesDirectory() string {
 	val, ok := os.LookupEnv("GOPATH")
-	if ok {
-		kubernetesDirectory = path.Join(val, "src/k8s.io/kubernetes")
+	if !ok {
+		fmt.Print("WARN: GOPATH not set")
+		return ""
 	}
-	auditCmd.Flags().StringVar(&outputFile, "kubernetes-directory", kubernetesDirectory, "path to kubernetes directory")
+
+	return path.Join(val, "src/k8s.io/kubernetes")
+}
+
+func init() {
+	auditCmd.Flags().StringVar(&kubernetesDirectory, "kubernetes-directory", getDefaultKubernetesDirectory(), "path to kubernetes directory")
 	rootCmd.AddCommand(auditCmd)
 }
 
