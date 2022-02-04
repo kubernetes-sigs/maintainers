@@ -27,7 +27,7 @@ jobs:
           path: ${{ github.workspace }}/src/github.com/dims/maintainers/
 
       - name: Build
-        run: go install .
+        run: make install
         working-directory: ${{ github.workspace }}/src/github.com/dims/maintainers/
 
       - name: Checkout kubernetes/community
