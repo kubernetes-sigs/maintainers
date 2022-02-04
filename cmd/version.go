@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors.
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,21 +13,25 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 package cmd
 
 import (
+	"fmt"
+
+	"github.com/dims/maintainers/pkg/version"
 	"github.com/spf13/cobra"
 )
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "maintainers",
-	Short: "tool for maintaining OWNERS files in kubernetes hello",
+func init() {
+	rootCmd.AddCommand(versionCmd)
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	cobra.CheckErr(rootCmd.Execute())
+// versionCmd sets up a Cobra command for version info
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "show version information",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(version.Get())
+	},
 }
