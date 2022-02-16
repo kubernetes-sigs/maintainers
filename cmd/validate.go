@@ -73,7 +73,7 @@ var validateCmd = &cobra.Command{
 		errors2 := warnFileMismatchesBetweenKubernetesRepoAndSigsYaml(fileMap)
 		errors = append(errors, errors2...)
 
-		if errors != nil && len(errors) > 0 {
+		if len(errors) > 0 {
 			for _, err := range errors {
 				fmt.Printf("WARNING: %v\n", err)
 			}
@@ -90,7 +90,7 @@ func warnFileMismatchesBetweenKubernetesRepoAndSigsYaml(fileMap map[string]strin
 	}
 
 	for key, val := range fileMap {
-		if strings.Index(key, "kubernetes/kubernetes") == -1 {
+		if !strings.Contains(key, "kubernetes/kubernetes") {
 			continue
 		}
 		found := false

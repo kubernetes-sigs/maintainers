@@ -18,12 +18,13 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/spf13/cobra"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -75,17 +76,24 @@ var pruneCmd = &cobra.Command{
 		var ownerContribs []utils.Contribution
 
 		if !skipDS {
-			err, contribs := utils.GetContributionsForAYear(repositoryDS, periodDS)
+			contribs, err := utils.GetContributionsForAYear(repositoryDS, periodDS)
 			if err != nil {
 				panic(err)
 			}
-			if contribs == nil || len(contribs) == 0 {
+			if len(contribs) == 0 {
 				panic("unable to find any contributions in repository : " + repositoryDS)
 			}
 			for _, id := range uniqueUsers {
 				for _, item := range contribs {
-					if strings.ToLower(item.ID) == strings.ToLower(id) {
-						ownerContribs = append(ownerContribs, utils.Contribution{id, item.ID, item.ContribCount, -1})
+					if strings.EqualFold(item.ID, id) {
+						ownerContribs = append(ownerContribs,
+							utils.Contribution{
+								ID:           id,
+								Alias:        item.ID,
+								ContribCount: item.ContribCount,
+								CommentCount: -1,
+							},
+						)
 						userIDs.Delete(id)
 						break
 					}
@@ -93,7 +101,14 @@ var pruneCmd = &cobra.Command{
 			}
 		} else {
 			for _, id := range uniqueUsers {
-				ownerContribs = append(ownerContribs, utils.Contribution{id, id, -1, -1})
+				ownerContribs = append(ownerContribs,
+					utils.Contribution{
+						ID:           id,
+						Alias:        id,
+						ContribCount: -1,
+						CommentCount: -1,
+					},
+				)
 				userIDs.Delete(id)
 			}
 		}
@@ -233,7 +248,7 @@ func getOwnersAndAliases(pwd string) (sets.String, map[string][]string, []string
 		userIDs.Insert(configOwners.Reviewers...)
 	}
 
-	for key, _ := range repoAliases {
+	for key := range repoAliases {
 		userIDs.Delete(key)
 	}
 	if len(aliasPath) > 0 {
