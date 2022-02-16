@@ -18,7 +18,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -29,6 +28,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -96,13 +97,11 @@ func auditLocalOwnersFiles(context *utils.Context, args []string) {
 	for _, groups := range context.PrefixToGroupMap() {
 		for _, group := range groups {
 			listOfGroups = append(listOfGroups, group.Dir)
-			var files []string
 			for _, subproject := range group.Subprojects {
 				for _, owner := range subproject.Owners {
 					if strings.Contains(owner, "/kubernetes/kubernetes/") {
 						split := strings.SplitN(owner, "/", 7)
 						filename := split[len(split)-1]
-						files = append(files, filename)
 						if val, ok := mapFilesToGroups[filename]; ok {
 							val.Insert(group.Dir)
 						} else {
@@ -172,7 +171,7 @@ func auditLocalOwnersFiles(context *utils.Context, args []string) {
 		}
 	}
 	for _, line := range infoLog.List() {
-		fmt.Printf(line)
+		fmt.Println(line)
 	}
 }
 

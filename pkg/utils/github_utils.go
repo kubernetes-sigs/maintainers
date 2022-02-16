@@ -103,7 +103,7 @@ func GetKubernetesOwnersFiles() (*[]string, error) {
 	directories := make([]string, len(c.Files))
 	for _, directory := range c.Files {
 		if len(directory.Path) > 0 &&
-			strings.Index(directory.Path, "/OWNERS") != -1 &&
+			strings.Contains(directory.Path, "/OWNERS") &&
 			strings.Index(directory.Path, "vendor/") != 0 {
 			directories = append(directories, directory.Path)
 		}

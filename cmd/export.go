@@ -18,11 +18,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/spf13/cobra"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -91,7 +92,7 @@ func exportOwnersAndAliases(pwd string) error {
 		}
 		userIDs.Insert(configOwners.Approvers...)
 		userIDs.Insert(configOwners.Reviewers...)
-		for key, _ := range repoAliases {
+		for key := range repoAliases {
 			if userIDs.Has(key) {
 				userIDs.Delete(key)
 				aliases.Insert(key)

@@ -20,13 +20,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
-func GetContributionsForAYear(repository string, period string) (error, []Contribution) {
+func GetContributionsForAYear(repository string, period string) ([]Contribution, error) {
 	postBody := `{
 	"queries": [{
 		"refId": "A",
@@ -47,22 +48,22 @@ func GetContributionsForAYear(repository string, period string) (error, []Contri
 	requestBody := bytes.NewBuffer([]byte(postBody))
 	resp, err := http.Post("https://k8s.devstats.cncf.io/api/ds/query", "application/json", requestBody)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(err, "bad error code from devstats : "+string(resp.StatusCode)), nil
+		return nil, errors.Wrap(err, fmt.Sprintf("bad error code from devstats: %d", resp.StatusCode))
 	}
 
 	var parsed map[string]map[string]map[string][]Frames
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 	err = json.Unmarshal(body, &parsed)
 	if err != nil {
-		return errors.Wrap(err, "unable to parse json from devstats"), nil
+		return nil, errors.Wrap(err, "unable to parse json from devstats")
 	}
 
 	foo := parsed["results"]["A"]["frames"][0].Data.Items[0]
@@ -72,5 +73,5 @@ func GetContributionsForAYear(repository string, period string) (error, []Contri
 	for i := 0; i < len(foo); i++ {
 		contribs = append(contribs, Contribution{foo[i].(string), "", int(bar[i].(float64)), -1})
 	}
-	return nil, contribs
+	return contribs, nil
 }

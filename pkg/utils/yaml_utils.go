@@ -80,7 +80,7 @@ func switchToEmeritus(rootNode *yaml3.Node, user string) {
 func addUserToEmeritusList(emeritusSeqNode *yaml3.Node, user string) {
 	foundInEmeritusList := false
 	for _, item := range emeritusSeqNode.Content {
-		if item.Kind == yaml3.ScalarNode && strings.ToLower(item.Value) == strings.ToLower(user) {
+		if item.Kind == yaml3.ScalarNode && strings.EqualFold(item.Value, user) {
 			foundInEmeritusList = true
 		}
 	}
@@ -169,7 +169,7 @@ func removeUserFromApproversAndReviewers(mappingNode *yaml3.Node, user string) b
 				var newList []*yaml3.Node
 				for _, item := range seqNode.Content {
 					// skip the user we want to eliminate from the list
-					if item.Kind == yaml3.ScalarNode && strings.ToLower(item.Value) == strings.ToLower(user) {
+					if item.Kind == yaml3.ScalarNode && strings.EqualFold(item.Value, user) {
 						if node.Value == "approvers" {
 							foundInApproverList = true
 						}
