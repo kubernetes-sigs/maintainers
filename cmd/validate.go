@@ -69,7 +69,7 @@ var validateCmd = &cobra.Command{
 		}
 
 		groupMap := context.PrefixToGroupMap()
-		fileMap, errors := validateOwnersFilesInGroups(&groupMap)
+		fileMap, errors := validateOwnersFilesInGroups(groupMap)
 		errors2 := warnFileMismatchesBetweenKubernetesRepoAndSigsYaml(fileMap)
 		errors = append(errors, errors2...)
 
@@ -94,7 +94,7 @@ func warnFileMismatchesBetweenKubernetesRepoAndSigsYaml(fileMap map[string]strin
 			continue
 		}
 		found := false
-		for _, file := range *ownerFiles {
+		for _, file := range ownerFiles {
 			if len(file) == 0 {
 				continue
 			}
@@ -107,7 +107,7 @@ func warnFileMismatchesBetweenKubernetesRepoAndSigsYaml(fileMap map[string]strin
 		}
 	}
 
-	for _, file := range *ownerFiles {
+	for _, file := range ownerFiles {
 		if len(file) > 0 {
 			if _, ok := fileMap[file]; !ok {
 				errors = append(errors, fmt.Errorf("file [%s] is not in sigs.yaml", file))
@@ -118,10 +118,10 @@ func warnFileMismatchesBetweenKubernetesRepoAndSigsYaml(fileMap map[string]strin
 	return errors
 }
 
-func validateOwnersFilesInGroups(groupMap *map[string][]utils.Group) (map[string]string, []error) {
+func validateOwnersFilesInGroups(groupMap map[string][]utils.Group) (map[string]string, []error) {
 	fileMap := map[string]string{}
 	var errors []error
-	for groupType, groups := range *groupMap {
+	for groupType, groups := range groupMap {
 		for _, group := range groups {
 			for _, sub := range group.Subprojects {
 				for _, filePath := range sub.Owners {

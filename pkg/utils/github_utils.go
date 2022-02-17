@@ -76,7 +76,7 @@ func FetchPRCommentCount(user, repository string) (int, error) {
 	return strconv.Atoi(fmt.Sprintf("%v", result["total_count"]))
 }
 
-func GetKubernetesOwnersFiles() (*[]string, error) {
+func GetKubernetesOwnersFiles() ([]string, error) {
 	resp, err := http.Get("https://api.github.com/repos/kubernetes/kubernetes/git/trees/master?recursive=1")
 	if err != nil {
 		return nil, err
@@ -108,5 +108,5 @@ func GetKubernetesOwnersFiles() (*[]string, error) {
 			directories = append(directories, directory.Path)
 		}
 	}
-	return &directories, nil
+	return directories, nil
 }
