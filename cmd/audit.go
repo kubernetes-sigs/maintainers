@@ -18,7 +18,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -29,6 +28,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -50,6 +51,7 @@ func getDefaultKubernetesDirectory() string {
 
 func init() {
 	auditCmd.Flags().StringVar(&kubernetesDirectory, "kubernetes-directory", getDefaultKubernetesDirectory(), "path to kubernetes directory")
+	auditCmd.SilenceErrors = true
 	rootCmd.AddCommand(auditCmd)
 }
 

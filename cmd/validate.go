@@ -139,5 +139,6 @@ func validateOwnersFilesInGroups(groupMap *map[string][]utils.Group) (map[string
 }
 
 func init() {
+	validateCmd.SilenceErrors = true
 	rootCmd.AddCommand(validateCmd)
 }

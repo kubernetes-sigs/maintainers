@@ -18,10 +18,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 	"sort"
 	"time"
+
+	"github.com/spf13/cobra"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -50,6 +51,7 @@ var labelsFile string
 
 func init() {
 	labelsCmd.Flags().StringVar(&labelsFile, "output", "labels.csv", "output file path")
+	labelsCmd.SilenceErrors = true
 	rootCmd.AddCommand(labelsCmd)
 }
 
