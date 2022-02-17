@@ -18,7 +18,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -29,6 +28,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -59,11 +60,11 @@ var auditCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Short: "ensure OWNERS, OWNERS_ALIASES and sigs.yaml have the correct data structure",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Running script : %s\n", time.Now().Format("01-02-2006 15:04:05"))
 		pwd, err := os.Getwd()
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		if _, err := os.Stat(kubernetesDirectory); errors.Is(err, os.ErrNotExist) {
@@ -74,11 +75,11 @@ var auditCmd = &cobra.Command{
 
 		sigsYamlPath, err := utils.GetSigsYamlFile(pwd)
 		if err != nil {
-			panic(fmt.Errorf("ERROR: unable to find sigs.yaml file: %w", err))
+			return err
 		}
 		context, err := utils.GetSigsYaml(sigsYamlPath)
 		if err != nil {
-			panic(fmt.Errorf("ERROR: parsing file: %s - %w", sigsYamlPath, err))
+			return err
 		}
 
 		if auditSpecifiedGroups(pwd, context, args) {
@@ -86,6 +87,7 @@ var auditCmd = &cobra.Command{
 			auditLocalOwnersFiles(context, args)
 		}
 		fmt.Printf("Done.\n")
+		return nil
 	},
 }
 

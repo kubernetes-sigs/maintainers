@@ -18,10 +18,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 	"sort"
 	"time"
+
+	"github.com/spf13/cobra"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -33,16 +34,17 @@ var labelsCmd = &cobra.Command{
 	Use:   "labels",
 	Short: "print a list of OWNERS files for labels",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Running script : %s\n", time.Now().Format("01-02-2006 15:04:05"))
 		pwd, err := os.Getwd()
 		if err != nil {
-			panic(err)
+			return err
 		}
 		err = printFilesForLabels(pwd)
 		if err != nil {
-			panic(err)
+			return err
 		}
+		return nil
 	},
 }
 

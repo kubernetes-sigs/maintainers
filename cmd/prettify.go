@@ -42,16 +42,16 @@ var prettifyCmd = &cobra.Command{
 	Use:   "prettify",
 	Short: "ensure all OWNERS related files are valid yaml and look the same",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Running script : %s\n", time.Now().Format("01-02-2006 15:04:05"))
 		pwd, err := os.Getwd()
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		files, err := utils.GetOwnerFiles(pwd)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		aliasPath, err := utils.GetOwnersAliasesFile(pwd)
@@ -69,21 +69,22 @@ var prettifyCmd = &cobra.Command{
 		for _, path := range files {
 			sourceYaml, err := ioutil.ReadFile(path)
 			if err != nil {
-				panic(err)
+				return err
 			}
 			rootNode, err := fetchYaml(sourceYaml)
 			if err != nil {
-				panic(err)
+				return err
 			}
 			writer, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 			if err != nil {
-				panic(err)
+				return err
 			}
 			err = streamYaml(writer, indent, rootNode)
 			if err != nil {
-				panic(err)
+				return err
 			}
 		}
+		return nil
 	},
 }
 

@@ -32,18 +32,18 @@ var validateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "ensure OWNERS, OWNERS_ALIASES and sigs.yaml have the correct data structure",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Running script : %s\n", time.Now().Format("01-02-2006 15:04:05"))
 		pwd, err := os.Getwd()
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		aliasPath, err := utils.GetOwnersAliasesFile(pwd)
 		if err == nil && len(aliasPath) > 0 {
 			_, err := utils.GetOwnerAliases(aliasPath)
 			if err != nil {
-				panic(fmt.Errorf("error parsing file: %s - %w", aliasPath, err))
+				return err
 			}
 		}
 
@@ -52,19 +52,19 @@ var validateCmd = &cobra.Command{
 		if err == nil && len(sigsYamlPath) > 0 {
 			context, err = utils.GetSigsYaml(sigsYamlPath)
 			if err != nil {
-				panic(fmt.Errorf("error parsing file: %s - %w", sigsYamlPath, err))
+				return err
 			}
 		}
 
 		files, err := utils.GetOwnerFiles(pwd)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		for _, path := range files {
 			_, err := utils.GetOwnersInfo(path)
 			if err != nil {
-				panic(fmt.Errorf("error parsing file: %s - %w", path, err))
+				return err
 			}
 		}
 
@@ -79,6 +79,7 @@ var validateCmd = &cobra.Command{
 			}
 			//panic("please see errors above")
 		}
+		return nil
 	},
 }
 

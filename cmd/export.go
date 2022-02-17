@@ -18,11 +18,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/spf13/cobra"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -34,16 +35,17 @@ var exportCmd = &cobra.Command{
 	Use:   "export",
 	Short: "export contents of OWNERS and OWNERS_ALIASES as parsable csv file",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Running script : %s\n", time.Now().Format("01-02-2006 15:04:05"))
 		pwd, err := os.Getwd()
 		if err != nil {
-			panic(err)
+			return err
 		}
 		err = exportOwnersAndAliases(pwd)
 		if err != nil {
-			panic(err)
+			return err
 		}
+		return nil
 	},
 }
 
