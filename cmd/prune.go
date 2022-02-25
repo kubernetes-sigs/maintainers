@@ -55,16 +55,16 @@ var pruneCmd = &cobra.Command{
 	Use:   "prune",
 	Short: "Remove stale github ids from OWNERS and OWNERS_ALIASES",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Running script : %s\n", time.Now().Format("01-02-2006 15:04:05"))
 		pwd, err := os.Getwd()
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		userIDs, repoAliases, files, err := getOwnersAndAliases(pwd)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		for _, file := range files {
 			fmt.Printf("Processed %s\n", file)
@@ -78,7 +78,7 @@ var pruneCmd = &cobra.Command{
 		if !skipDS {
 			contribs, err := utils.GetContributionsForAYear(repositoryDS, periodDS)
 			if err != nil {
-				panic(err)
+				return err
 			}
 			if len(contribs) == 0 {
 				panic("unable to find any contributions in repository : " + repositoryDS)
@@ -154,11 +154,12 @@ var pruneCmd = &cobra.Command{
 		if !dryRun {
 			err = fixupOwnersFiles(files, missingIDs, lowPRComments)
 			if err != nil {
-				panic(err)
+				return err
 			}
 		} else {
 			fmt.Printf("--dryrun is set to true, will skip updating OWNERS and OWNER_ALIASES")
 		}
+		return nil
 	},
 }
 

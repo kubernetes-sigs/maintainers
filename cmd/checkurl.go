@@ -40,23 +40,24 @@ var checkURLsCmd = &cobra.Command{
 	Use:   "check-urls",
 	Short: "ensure all the urls in yaml file are still valid",
 	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Running script : %s\n", time.Now().Format("01-02-2006 15:04:05"))
 		fmt.Printf("Processing %s\n", yamlFile)
 		sourceYaml, err := ioutil.ReadFile(yamlFile)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		rootNode := yaml.Node{}
 		err = yaml.Unmarshal(sourceYaml, &rootNode)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		ok := processNode(&rootNode)
 		fmt.Println("done")
 		if !ok {
 			os.Exit(1)
 		}
+		return nil
 	},
 }
 
