@@ -51,6 +51,7 @@ func getDefaultKubernetesDirectory() string {
 
 func init() {
 	auditCmd.Flags().StringVar(&kubernetesDirectory, "kubernetes-directory", getDefaultKubernetesDirectory(), "path to kubernetes directory")
+	auditCmd.SilenceErrors = true
 	rootCmd.AddCommand(auditCmd)
 }
 

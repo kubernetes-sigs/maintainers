@@ -23,6 +23,7 @@ import (
 )
 
 func init() {
+	versionCmd.SilenceErrors = true
 	rootCmd.AddCommand(versionCmd)
 }
 

@@ -32,6 +32,7 @@ var yamlFile string
 
 func init() {
 	checkURLsCmd.Flags().StringVar(&yamlFile, "yaml-file", "sigs.yaml", "validate urls in this yaml file")
+	checkURLsCmd.SilenceErrors = true
 	rootCmd.AddCommand(checkURLsCmd)
 }
 

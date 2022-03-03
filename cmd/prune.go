@@ -47,6 +47,7 @@ func init() {
 	pruneCmd.Flags().StringVar(&periodDS, "period-devstats", "y", "one of \"y\" (year) \"q\" (quarter) \"m\" (month) ")
 	pruneCmd.Flags().StringSliceVar(&excludeFiles, "exclude-files", []string{}, "do not update these OWNERS files")
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
+	pruneCmd.SilenceErrors = true
 	rootCmd.AddCommand(pruneCmd)
 }
 

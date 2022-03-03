@@ -52,6 +52,7 @@ var labelsFile string
 
 func init() {
 	labelsCmd.Flags().StringVar(&labelsFile, "output", "labels.csv", "output file path")
+	labelsCmd.SilenceErrors = true
 	rootCmd.AddCommand(labelsCmd)
 }
 

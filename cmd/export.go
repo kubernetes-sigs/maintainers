@@ -53,6 +53,7 @@ var outputFile string
 
 func init() {
 	exportCmd.Flags().StringVar(&outputFile, "output", "export.csv", "output file path")
+	exportCmd.SilenceErrors = true
 	rootCmd.AddCommand(exportCmd)
 }
 

@@ -89,6 +89,7 @@ var prettifyCmd = &cobra.Command{
 }
 
 func init() {
+	prettifyCmd.SilenceErrors = true
 	rootCmd.AddCommand(prettifyCmd)
 }
 
