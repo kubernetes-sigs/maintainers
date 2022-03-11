@@ -1,0 +1,42 @@
+sigs:
+- dir: sig-api-machinery
+  name: API Machinery
+  mission_statement: >
+    Covers all aspects of API server, API registration and discovery, generic API
+    CRUD semantics, admission control, encoding/decoding, conversion, defaulting,
+    persistence layer (etcd), OpenAPI, CustomResourceDefinition, garbage collection,
+    and client libraries.
+
+  charter_link: charter.md
+  label: api-machinery
+  leadership:
+    chairs:
+    - github: deads2k
+      name: David Eads
+      company: Red Hat
+    tech_leads:
+    - github: deads2k
+      name: David Eads
+      company: Red Hat
+  meetings:
+  - description: Regular SIG Meeting
+    day: Wednesday
+    time: "11:00"
+    tz: PT (Pacific Time)
+    frequency: biweekly
+    url: https://zoom.us/my/apimachinery
+    archive_url: https://goo.gl/0lbiM9
+    recordings_url: https://www.youtube.com/playlist?list=PL69nYSiGNLP21oW3hbLyjjj4XhrwKxH2R
+  contact:
+    slack: sig-api-machinery
+    mailing_list: https://groups.google.com/forum/#!forum/kubernetes-sig-api-machinery
+    teams:
+    - name: sig-api-machinery-api-reviews
+      description: API Changes and Reviews (API Machinery APIs, NOT all APIs)
+    liaison:
+      github: dims
+      name: Davanum Srinivas
+  subprojects:
+  - name: component-base
+    owners:
+    - https://raw.githubusercontent.com/kubernetes-sigs/legacyflag/master/OWNERS  
