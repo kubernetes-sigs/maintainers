@@ -7,12 +7,13 @@ and print the github id, pr comment count and devstats contribution count as wel
 
 ## Installation
 
-Run `make` to install Maintainers. Currently `make` will run the `hack/install-maintainers.sh` script.
+Run `make` to install `maintainers`. Currently `make` will run the `hack/install-maintainers.sh` script.
 
 ## Usage
 
-Maintainers looks for OWNERS files in the repository where you run `maintainers`. In the
-example below, `maintainers` is running on the OWNERS files in the `kubernetes` repo.
+Unless there is a flag to specify the context (e.g., --repository-github, --yaml-file,
+--kubernetes-directory), Maintainers uses the directory where you run `maintainers` to provide the context
+for the results. 
 
 ```bash
 [dims@dims-m1 20:58] ~/go/src/k8s.io/kubernetes ⟩ ../maintainers/maintainers help prune
