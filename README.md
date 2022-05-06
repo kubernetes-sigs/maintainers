@@ -12,7 +12,7 @@ Run `make` to install `maintainers`. Currently `make` will run the `hack/install
 ## Usage
 
 Unless there is a flag to specify the context (e.g., --repository-github, --yaml-file,
---kubernetes-directory), Maintainers uses the directory where you run `maintainers` to provide the context
+--kubernetes-directory), the tool uses the directory in which it is run to provide the context
 for the results. 
 
 ```bash
