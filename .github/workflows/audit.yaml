@@ -24,11 +24,11 @@ jobs:
 
       - uses: actions/checkout@v2
         with:
-          path: ${{ github.workspace }}/src/github.com/dims/maintainers/
+          path: ${{ github.workspace }}/src/github.com/kubernetes-sigs/maintainers/
 
       - name: Build
         run: make install
-        working-directory: ${{ github.workspace }}/src/github.com/dims/maintainers/
+        working-directory: ${{ github.workspace }}/src/github.com/kubernetes-sigs/maintainers/
 
       - name: Checkout kubernetes/community
         uses: actions/checkout@v2

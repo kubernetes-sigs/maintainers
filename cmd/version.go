@@ -18,7 +18,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/dims/maintainers/pkg/version"
+	"github.com/kubernetes-sigs/maintainers/pkg/version"
 	"github.com/spf13/cobra"
 )
 

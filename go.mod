@@ -1,4 +1,4 @@
-module github.com/dims/maintainers
+module github.com/kubernetes-sigs/maintainers
 
 go 1.17
 

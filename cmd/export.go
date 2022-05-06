@@ -27,7 +27,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/dims/maintainers/pkg/utils"
+	"github.com/kubernetes-sigs/maintainers/pkg/utils"
 )
 
 // exportCmd represents the export command

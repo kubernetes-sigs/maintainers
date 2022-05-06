@@ -24,7 +24,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/dims/maintainers/pkg/utils"
+	"github.com/kubernetes-sigs/maintainers/pkg/utils"
 )
 
 // validateCmd represents the validate command

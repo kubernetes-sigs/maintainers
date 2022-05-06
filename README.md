@@ -65,7 +65,7 @@ updating these files.
 
 You can also validate/check if all the urls in a file are correct using `check-urls`
 ```bash
-[dims@dims-m1 11:31] ~/go/src/k8s.io/community ⟩ ~/go/src/github.com/dims/maintainers/maintainers help check-urls
+[dims@dims-m1 11:31] ~/go/src/k8s.io/community ⟩ ~/go/src/github.com/kubernetes-sigs/maintainers/maintainers help check-urls
 ensure all the urls in yaml file are still valid
 
 Usage:
@@ -80,7 +80,7 @@ The new `audit` command is helpful to kubernetes chairs and leads as it vets the
 
 Notes:
 - ensure kubernetes/community and kubernetes/kubernetes is checked out under $GOPATH/src/k8s.io
-- install the tool using `go install github.com/dims/maintainers@v0.2.0` (where v0.2.0 is latest tag as of right now, please check for newer tags)
+- install the tool using `go install github.com/kubernetes-sigs/maintainers@v0.2.0` (where v0.2.0 is latest tag as of right now, please check for newer tags)
 - change directory to `$GOPATH/src/k8s.io/community` directory and run `maintainers audit sig-auth` (or your own sig) and review the output.
 
 ```bash
