@@ -6,7 +6,7 @@ if git_status=$(git status --porcelain --untracked=no 2>/dev/null) && [[ -z "${g
     git_tree_state=clean
 fi
 
-version_pkg=github.com/dims/maintainers/pkg/version
+version_pkg=github.com/kubernetes-sigs/maintainers/pkg/version
 bin_name=maintainers
 
 MAINTAINERS_INSTALL_PATH="${GOPATH}/bin"

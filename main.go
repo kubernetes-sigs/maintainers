@@ -16,7 +16,7 @@ limitations under the License.
 
 package main
 
-import "github.com/dims/maintainers/cmd"
+import "github.com/kubernetes-sigs/maintainers/cmd"
 
 func main() {
 	cmd.Execute()
