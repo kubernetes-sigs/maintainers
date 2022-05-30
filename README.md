@@ -5,6 +5,16 @@ https://k8s.devstats.cncf.io/d/13/developer-activity-counts-by-repository-group?
 
 and print the github id, pr comment count and devstats contribution count as well.
 
+## Installation
+
+Run `make` to install `maintainers`. Currently `make` will run the `hack/install-maintainers.sh` script.
+
+## Usage
+
+Unless there is a flag to specify the context (e.g., --repository-github, --yaml-file,
+--kubernetes-directory), the tool uses the directory in which it is run to provide the context
+for the results. 
+
 ```bash
 [dims@dims-m1 20:58] ~/go/src/k8s.io/kubernetes ⟩ ../maintainers/maintainers help prune
 Remove stale github ids from OWNERS and OWNERS_ALIASES
