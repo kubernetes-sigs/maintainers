@@ -113,3 +113,22 @@ func GetSigsYamlFile(root string) (string, error) {
 	}
 	return "", err
 }
+
+func GetEmeritusCounts(path string) (*EmeritusCounts, error) {
+	ownerFiles, err := GetOwnerFiles(path)
+	if err != nil {
+		return nil, err
+	}
+
+	counts := NewEmeritusCounts()
+	for _, file := range ownerFiles {
+		info, err := GetOwnersInfo(file)
+		if err != nil {
+			return nil, err
+		}
+		counts.ReviewerCounts[file] = info.EmeritusReviewersCount()
+		counts.ApproverCounts[file] = info.EmeritusApproversCount()
+	}
+
+	return counts, nil
+}

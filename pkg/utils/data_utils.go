@@ -30,7 +30,26 @@ type OwnersInfo struct {
 	RequiredReviewers []string               `json:"required_reviewers,omitempty"`
 	Labels            []string               `json:"labels,omitempty"`
 	EmeritusApprovers []string               `json:"emeritus_approvers,omitempty"`
+	EmeritusReviewers []string               `json:"emeritus_reviewers,omitempty"`
 	Options           DirOptions             `json:"options,omitempty"`
+}
+
+func (o *OwnersInfo) EmeritusApproversCount() int {
+	count := len(o.EmeritusApprovers)
+	for _, f := range o.Filters {
+		count += len(f.EmeritusApprovers)
+	}
+
+	return count
+}
+
+func (o *OwnersInfo) EmeritusReviewersCount() int {
+	count := len(o.EmeritusReviewers)
+	for _, f := range o.Filters {
+		count += len(f.EmeritusReviewers)
+	}
+
+	return count
 }
 
 type DirOptions struct {
@@ -42,6 +61,7 @@ type FiltersInfo struct {
 	Reviewers         []string `json:"reviewers,omitempty"`
 	Labels            []string `json:"labels,omitempty"`
 	EmeritusApprovers []string `json:"emeritus_approvers,omitempty"`
+	EmeritusReviewers []string `json:"emeritus_reviewers,omitempty"`
 	RequiredReviewers []string `json:"required_reviewers,omitempty"`
 }
 
@@ -87,7 +107,6 @@ type Group struct {
 	Contact          Contact
 	Subprojects      []Subproject `yaml:",omitempty" json:",omitempty"`
 }
-
 
 // PrefixToGroupMap returns a map of prefix to groups, useful for iteration over all groups
 func (c *Context) PrefixToGroupMap() map[string][]Group {
@@ -189,4 +208,94 @@ func (x FoldedString) MarshalYAML() (interface{}, error) {
 		Style: yaml.FoldedStyle,
 		Value: string(x),
 	}, nil
+}
+
+// EmeritusCounts holds mappings of path of an OWNERS file
+// that has emeritus_{approvers,reviewers} to how many of
+// them are there.
+type EmeritusCounts struct {
+	ReviewerCounts map[string]int
+	ApproverCounts map[string]int
+}
+
+func NewEmeritusCounts() *EmeritusCounts {
+	return &EmeritusCounts{
+		ReviewerCounts: make(map[string]int),
+		ApproverCounts: make(map[string]int),
+	}
+}
+
+// EmeritusDiff captures the values calculated as the difference
+// between two EmeritusCounts along with some additional info.
+type EmeritusDiffFields struct {
+	AddedCount            int
+	RemovedCount          int
+	OwnersFilesWhereAdded int
+	OwnersFilesWhereDel   int
+	AvgAddPerFile         float64
+	AvgDelPerFile         float64
+}
+
+func (d EmeritusDiffFields) PrettyPrint() {
+	fmt.Println("Number of OWNERS files where additions were done:", d.OwnersFilesWhereAdded)
+	fmt.Println("Number of OWNERS files where deletions were done:", d.OwnersFilesWhereDel)
+	fmt.Println("Total number added:", d.AddedCount)
+	fmt.Println("Total number deleted:", d.RemovedCount)
+	fmt.Println("Avg number added per OWNERS file:", d.AvgAddPerFile)
+	fmt.Println("Avg number deleted per OWNERS file:", d.AvgDelPerFile)
+}
+
+type EmeritusDiff struct {
+	Reviewers EmeritusDiffFields
+	Approvers EmeritusDiffFields
+}
+
+func CalculateEmeritusDiff(from, to *EmeritusCounts) EmeritusDiff {
+	diff := EmeritusDiff{}
+
+	for path, count := range from.ReviewerCounts {
+		if countTo, ok := to.ReviewerCounts[path]; ok {
+			if countTo == count {
+				continue
+			}
+			if countTo > count {
+				diff.Reviewers.OwnersFilesWhereAdded++
+				diff.Reviewers.AddedCount += (countTo - count)
+			} else {
+				diff.Reviewers.OwnersFilesWhereDel++
+				diff.Reviewers.RemovedCount += (count - countTo)
+			}
+		}
+	}
+
+	for path, count := range from.ApproverCounts {
+		if countTo, ok := to.ApproverCounts[path]; ok {
+			if countTo == count {
+				continue
+			}
+			if countTo > count {
+				diff.Approvers.OwnersFilesWhereAdded++
+				diff.Approvers.AddedCount += (countTo - count)
+			} else {
+				diff.Approvers.OwnersFilesWhereDel++
+				diff.Approvers.RemovedCount += (count - countTo)
+			}
+		}
+	}
+
+	if diff.Reviewers.OwnersFilesWhereAdded != 0 {
+		diff.Reviewers.AvgAddPerFile = float64(diff.Reviewers.AddedCount) / float64(diff.Reviewers.OwnersFilesWhereAdded)
+	}
+	if diff.Reviewers.OwnersFilesWhereDel != 0 {
+		diff.Reviewers.AvgDelPerFile = float64(diff.Reviewers.RemovedCount) / float64(diff.Reviewers.OwnersFilesWhereDel)
+	}
+
+	if diff.Approvers.OwnersFilesWhereAdded != 0 {
+		diff.Approvers.AvgAddPerFile = float64(diff.Approvers.AddedCount) / float64(diff.Approvers.OwnersFilesWhereAdded)
+	}
+	if diff.Approvers.OwnersFilesWhereDel != 0 {
+		diff.Approvers.AvgDelPerFile = float64(diff.Approvers.RemovedCount) / float64(diff.Approvers.OwnersFilesWhereDel)
+	}
+
+	return diff
 }
