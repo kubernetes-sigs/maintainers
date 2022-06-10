@@ -31,21 +31,30 @@ import (
 	"github.com/kubernetes-sigs/maintainers/pkg/utils"
 )
 
-var dryRun, skipGH, skipDS bool
-var repositoryDS, repositoryGH, periodDS string
-var includes, excludes []string
-var excludeFiles []string
+type options struct {
+	dryRun       bool
+	skipDS       bool
+	skipGH       bool
+	repositoryDS string
+	repositoryGH string
+	periodDS     string
+	includes     []string
+	excludes     []string
+	excludeFiles []string
+}
+
+var o options
 
 func init() {
-	pruneCmd.Flags().StringSliceVar(&includes, "include", []string{}, "add these comma-separated list of users to prune from OWNERS")
-	pruneCmd.Flags().StringSliceVar(&excludes, "exclude", []string{}, "do not prune these comma-separated list of users from OWNERS")
-	pruneCmd.Flags().BoolVar(&dryRun, "dryrun", true, "do not modify any files")
-	pruneCmd.Flags().BoolVar(&skipGH, "skip-github", false, "skip github PR count check")
-	pruneCmd.Flags().BoolVar(&skipDS, "skip-devstats", false, "skip devstat contributions count check")
-	pruneCmd.Flags().StringVar(&repositoryDS, "repository-devstats", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
-	pruneCmd.Flags().StringVar(&repositoryGH, "repository-github", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
-	pruneCmd.Flags().StringVar(&periodDS, "period-devstats", "y", "one of \"y\" (year) \"q\" (quarter) \"m\" (month) ")
-	pruneCmd.Flags().StringSliceVar(&excludeFiles, "exclude-files", []string{}, "do not update these OWNERS files")
+	pruneCmd.Flags().StringSliceVar(&o.includes, "include", []string{}, "add these comma-separated list of users to prune from OWNERS")
+	pruneCmd.Flags().StringSliceVar(&o.excludes, "exclude", []string{}, "do not prune these comma-separated list of users from OWNERS")
+	pruneCmd.Flags().BoolVar(&o.dryRun, "dryrun", true, "do not modify any files")
+	pruneCmd.Flags().BoolVar(&o.skipGH, "skip-github", false, "skip github PR count check")
+	pruneCmd.Flags().BoolVar(&o.skipDS, "skip-devstats", false, "skip devstat contributions count check")
+	pruneCmd.Flags().StringVar(&o.repositoryDS, "repository-devstats", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
+	pruneCmd.Flags().StringVar(&o.repositoryGH, "repository-github", "kubernetes/kubernetes", "defaults to \"kubernetes/kubernetes\" repository")
+	pruneCmd.Flags().StringVar(&o.periodDS, "period-devstats", "y", "one of \"y\" (year) \"q\" (quarter) \"m\" (month) ")
+	pruneCmd.Flags().StringSliceVar(&o.excludeFiles, "exclude-files", []string{}, "do not update these OWNERS files")
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	pruneCmd.SilenceErrors = true
 	rootCmd.AddCommand(pruneCmd)
@@ -76,13 +85,13 @@ var pruneCmd = &cobra.Command{
 
 		var ownerContribs []utils.Contribution
 
-		if !skipDS {
-			contribs, err := utils.GetContributionsForAYear(repositoryDS, periodDS)
+		if !o.skipDS {
+			contribs, err := utils.GetContributionsForAYear(o.repositoryDS, o.periodDS)
 			if err != nil {
 				return err
 			}
 			if len(contribs) == 0 {
-				panic("unable to find any contributions in repository : " + repositoryDS)
+				panic("unable to find any contributions in repository : " + o.repositoryDS)
 			}
 			for _, id := range uniqueUsers {
 				for _, item := range contribs {
@@ -115,7 +124,7 @@ var pruneCmd = &cobra.Command{
 		}
 
 		var lowPRComments []string
-		if !skipGH {
+		if !o.skipGH {
 			lowPRComments = fetchGithubPRCommentCounts(ownerContribs)
 		}
 
@@ -125,7 +134,7 @@ var pruneCmd = &cobra.Command{
 				ownerContribs[i].CommentCount > ownerContribs[j].CommentCount
 		})
 
-		fmt.Printf("\n\n>>>>> Contributions from %s devstats repo and %s github repo : %d\n", repositoryDS, repositoryGH, len(ownerContribs))
+		fmt.Printf("\n\n>>>>> Contributions from %s devstats repo and %s github repo : %d\n", o.repositoryDS, o.repositoryGH, len(ownerContribs))
 		fmt.Printf(">>>>> GitHub ID : Devstats contrib count : GitHub PR comment count\n")
 		for _, item := range ownerContribs {
 			if item.ID != item.Alias {
@@ -137,22 +146,22 @@ var pruneCmd = &cobra.Command{
 
 		missingIDs := userIDs.List()
 		sort.Strings(missingIDs)
-		if !skipDS {
-			fmt.Printf("\n\n>>>>> Missing Contributions in %s (devstats == 0): %d\n", repositoryDS, len(missingIDs))
+		if !o.skipDS {
+			fmt.Printf("\n\n>>>>> Missing Contributions in %s (devstats == 0): %d\n", o.repositoryDS, len(missingIDs))
 			for _, id := range missingIDs {
 				fmt.Printf("%s\n", id)
 			}
 		}
 
-		if !skipGH {
+		if !o.skipGH {
 			fmt.Printf("\n\n>>>>> Low reviews/approvals in %s (GH pr comments <= 10 && devstats <=20): %d\n",
-				repositoryGH, len(lowPRComments))
+				o.repositoryGH, len(lowPRComments))
 			for _, id := range lowPRComments {
 				fmt.Printf("%s\n", id)
 			}
 		}
 
-		if !dryRun {
+		if !o.dryRun {
 			err = fixupOwnersFiles(files, missingIDs, lowPRComments)
 			if err != nil {
 				return err
@@ -170,11 +179,11 @@ func fetchGithubPRCommentCounts(ownerContribs []utils.Contribution) []string {
 	for count, item := range ownerContribs {
 		commentCount = -1
 		var err error
-		commentCount, err = utils.FetchPRCommentCount(item.ID, repositoryGH)
+		commentCount, err = utils.FetchPRCommentCount(item.ID, o.repositoryGH)
 		for commentCount == -1 && err == nil {
 			fmt.Printf(".")
 			time.Sleep(5 * time.Second)
-			commentCount, err = utils.FetchPRCommentCount(item.ID, repositoryGH)
+			commentCount, err = utils.FetchPRCommentCount(item.ID, o.repositoryGH)
 		}
 		if item.ContribCount <= 20 && commentCount <= 10 {
 			lowPRComments = append(lowPRComments, item.ID)
@@ -192,12 +201,12 @@ func fixupOwnersFiles(files []string, missingIDs []string, lowPRComments []strin
 
 	userIDs.Insert(missingIDs...)
 	userIDs.Insert(lowPRComments...)
-	userIDs.Insert(includes...)
-	userIDs.Delete(excludes...)
+	userIDs.Insert(o.includes...)
+	userIDs.Delete(o.excludes...)
 
 	list := userIDs.List()
 	for _, path := range files {
-		if isExcludedPath(path, excludeFiles) {
+		if isExcludedPath(path, o.excludeFiles) {
 			continue
 		}
 		err := utils.RemoveUserFromOWNERS(path, list)
