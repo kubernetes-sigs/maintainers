@@ -23,8 +23,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 func GetContributionsForAYear(repository string, period string) ([]Contribution, error) {
@@ -53,7 +51,7 @@ func GetContributionsForAYear(repository string, period string) ([]Contribution,
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Wrap(err, fmt.Sprintf("bad error code from devstats: %d", resp.StatusCode))
+		return nil, fmt.Errorf("bad error code from devstats: %d: %w", resp.StatusCode, err)
 	}
 
 	var parsed map[string]map[string]map[string][]Frames
@@ -63,7 +61,7 @@ func GetContributionsForAYear(repository string, period string) ([]Contribution,
 	}
 	err = json.Unmarshal(body, &parsed)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse json from devstats")
+		return nil, fmt.Errorf("unable to parse json from devstats: %w", err)
 	}
 
 	foo := parsed["results"]["A"]["frames"][0].Data.Items[0]
