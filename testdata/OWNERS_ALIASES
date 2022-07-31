@@ -1,0 +1,21 @@
+aliases:
+  sig1-leads:
+    - lead1
+    - dude2
+    - guy3
+  sig2-leads:
+    - LEAD1
+    - DUDE2
+    - GUY3
+  wg1-leads:
+    - lead@
+    - guy$
+## BEGIN CUSTOM CONTENT
+  provider-1:
+    - lead1
+    - dude2
+  provider-2:
+    - DUDE2
+    - GUY3
+    - guy$
+## END CUSTOM CONTENT
