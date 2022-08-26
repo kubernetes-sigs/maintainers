@@ -1,5 +1,10 @@
 #! /usr/bin/env bash
 
+if [ -z $GOPATH ]; then
+    echo "GOPATH must be set to run this script"
+    exit 1
+fi
+
 # check if git tree is clean
 git_tree_state=dirty
 if git_status=$(git status --porcelain --untracked=no 2>/dev/null) && [[ -z "${git_status}" ]]; then
