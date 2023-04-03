@@ -1,6 +1,6 @@
 module github.com/kubernetes-sigs/maintainers
 
-go 1.18
+go 1.20
 
 require (
 	github.com/spf13/cobra v1.3.0
