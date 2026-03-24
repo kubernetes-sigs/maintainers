@@ -26,6 +26,7 @@ import (
 )
 
 func GetContributionsForAYear(repository string, period string) ([]Contribution, error) {
+	originalRepository := repository
 	postBody := `{
 	"queries": [{
 		"refId": "A",
@@ -51,25 +52,64 @@ func GetContributionsForAYear(repository string, period string) ([]Contribution,
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("bad error code from devstats: %d: %w", resp.StatusCode, err)
+		return nil, fmt.Errorf("devstats returned HTTP %d for repository %q period %q", resp.StatusCode, originalRepository, period)
 	}
 
-	var parsed map[string]map[string]map[string][]Frames
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	err = json.Unmarshal(body, &parsed)
+	contribs, err := parseContributions(body)
 	if err != nil {
+		return nil, fmt.Errorf("unable to read devstats contributions for repository %q period %q: %w", originalRepository, period, err)
+	}
+	return contribs, nil
+}
+
+func parseContributions(body []byte) ([]Contribution, error) {
+	var parsed map[string]map[string]map[string][]Frames
+	if err := json.Unmarshal(body, &parsed); err != nil {
 		return nil, fmt.Errorf("unable to parse json from devstats: %w", err)
 	}
 
-	foo := parsed["results"]["A"]["frames"][0].Data.Items[0]
-	bar := parsed["results"]["A"]["frames"][0].Data.Items[1]
+	results, ok := parsed["results"]
+	if !ok {
+		return nil, fmt.Errorf("response missing results")
+	}
+	queryResult, ok := results["A"]
+	if !ok {
+		return nil, fmt.Errorf("response missing query result A")
+	}
+	frames, ok := queryResult["frames"]
+	if !ok || len(frames) == 0 {
+		return nil, fmt.Errorf("response contained no frames")
+	}
 
-	var contribs []Contribution
-	for i := 0; i < len(foo); i++ {
-		contribs = append(contribs, Contribution{foo[i].(string), "", int(bar[i].(float64)), -1})
+	items := frames[0].Data.Items
+	if len(items) < 2 {
+		return nil, fmt.Errorf("response contained %d data columns, want at least 2", len(items))
+	}
+
+	names := items[0]
+	values := items[1]
+	if len(names) == 0 {
+		return nil, fmt.Errorf("response contained no contribution rows")
+	}
+	if len(names) != len(values) {
+		return nil, fmt.Errorf("response contained mismatched data column lengths: %d names, %d values", len(names), len(values))
+	}
+
+	contribs := make([]Contribution, 0, len(names))
+	for i := range names {
+		name, ok := names[i].(string)
+		if !ok {
+			return nil, fmt.Errorf("response row %d has non-string contributor name %T", i, names[i])
+		}
+		value, ok := values[i].(float64)
+		if !ok {
+			return nil, fmt.Errorf("response row %d has non-numeric contribution count %T", i, values[i])
+		}
+		contribs = append(contribs, Contribution{name, "", int(value), -1})
 	}
 	return contribs, nil
 }

@@ -91,7 +91,7 @@ var pruneCmd = &cobra.Command{
 				return err
 			}
 			if len(contribs) == 0 {
-				panic("unable to find any contributions in repository : " + o.repositoryDS)
+				return fmt.Errorf("devstats returned 0 contribution rows for %q during period %q; verify --repository-devstats or rerun with --skip-devstats", o.repositoryDS, o.periodDS)
 			}
 			for _, id := range uniqueUsers {
 				for _, item := range contribs {
