@@ -66,6 +66,9 @@ var pruneCmd = &cobra.Command{
 	Short: "Remove stale github ids from OWNERS and OWNERS_ALIASES",
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if o.skipGH && o.skipDS {
+			return fmt.Errorf("--skip-github and --skip-devstats cannot both be set, there would be no contribution data left to prune against")
+		}
 		fmt.Printf("Running script : %s\n", time.Now().Format("01-02-2006 15:04:05"))
 		pwd, err := os.Getwd()
 		if err != nil {
@@ -91,7 +94,7 @@ var pruneCmd = &cobra.Command{
 				return err
 			}
 			if len(contribs) == 0 {
-				panic("unable to find any contributions in repository : " + o.repositoryDS)
+				return fmt.Errorf("unable to find any contributions in repository : %s", o.repositoryDS)
 			}
 			for _, id := range uniqueUsers {
 				for _, item := range contribs {

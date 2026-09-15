@@ -107,7 +107,7 @@ func printFilesForLabels(pwd string) error {
 	}
 	err = f.Close()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	return nil

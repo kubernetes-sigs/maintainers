@@ -87,7 +87,7 @@ func warnFileMismatchesBetweenKubernetesRepoAndSigsYaml(fileMap map[string]strin
 	var errors []error
 	ownerFiles, err := utils.GetKubernetesOwnersFiles()
 	if err != nil {
-		panic(err)
+		return append(errors, err)
 	}
 
 	for key, val := range fileMap {

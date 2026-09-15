@@ -132,7 +132,7 @@ func exportOwnersAndAliases(pwd string) error {
 	fmt.Printf("\n\n>>>>> generating %s\n", outputFile)
 	f, err := os.Create(outputFile)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	for _, row := range rows {
 		_, err = fmt.Fprintf(f, "%s,%s,%s\n", row.id, row.alias, row.file)
@@ -142,7 +142,7 @@ func exportOwnersAndAliases(pwd string) error {
 	}
 	err = f.Close()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	return nil

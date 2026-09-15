@@ -84,9 +84,6 @@ func GetKubernetesOwnersFiles() ([]string, error) {
 	defer resp.Body.Close()
 
 	dec := json.NewDecoder(resp.Body)
-	if dec == nil {
-		panic("Failed to start decoding JSON data")
-	}
 
 	type Content struct {
 		Files []struct {
@@ -100,7 +97,7 @@ func GetKubernetesOwnersFiles() ([]string, error) {
 		return nil, err
 	}
 
-	directories := make([]string, len(c.Files))
+	directories := make([]string, 0, len(c.Files))
 	for _, directory := range c.Files {
 		if len(directory.Path) > 0 &&
 			strings.Contains(directory.Path, "/OWNERS") &&
